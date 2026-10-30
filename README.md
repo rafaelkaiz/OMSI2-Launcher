@@ -84,6 +84,10 @@ cargo build --release
 
 Run the tests with `cargo test --release -- --test-threads=1`. The `tools\` folder holds the PowerShell and disassembler helpers used to study OMSI's start screen.
 
+## License
+
+OMSI 2 Launcher is free software, released under the [GNU General Public License v3.0 or later](LICENSE). Copyright (C) 2026 Rafael Casaucao. You may use, study, share and modify it; if you distribute a modified version you must do so under the same license and make its source code available.
+
 ## Credits and legal
 
 OMSI 2 is a product of MR-Software and Aerosoft. This is an unofficial, independent community project, not affiliated with or endorsed by them, and it contains no OMSI 2 files. Support and add-ons for OMSI live at the [OMSI forum](https://forum.omnibussimulator.de/forum/).

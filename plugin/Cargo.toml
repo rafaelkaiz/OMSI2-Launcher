@@ -2,6 +2,7 @@
 name = "omsi2-launcher-plugin"
 version = "0.1.0"
 edition = "2021"
+license = "GPL-3.0-or-later"
 description = "Optional OMSI 2 plugin: lets the launcher press the start button of OMSI's start screen from inside the game."
 
 [lib]

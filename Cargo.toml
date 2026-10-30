@@ -2,6 +2,8 @@
 name = "omsi2-launcher"
 version = "0.9.0-beta.2"
 edition = "2024"
+license = "GPL-3.0-or-later"
+repository = "https://github.com/rafaelkaiz/OMSI2-Launcher"
 
 [dependencies]
 eframe = "0.37.0"
