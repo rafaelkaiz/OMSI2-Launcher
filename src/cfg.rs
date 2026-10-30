@@ -433,7 +433,9 @@ mod tests {
     }
 
     fn sandbox(name: &str) -> PathBuf {
-        let d = std::env::temp_dir().join(format!("omsi2-launcher-test-{name}-{}", stamp()));
+        // unique per process and per call: two runs within the same second must not share a folder
+        let nanos = SystemTime::now().duration_since(UNIX_EPOCH).map(|t| t.as_nanos()).unwrap_or(0);
+        let d = std::env::temp_dir().join(format!("omsi2-launcher-test-{name}-{}-{nanos}", std::process::id()));
         std::fs::create_dir_all(d.join("Drivers")).unwrap();
         d
     }
