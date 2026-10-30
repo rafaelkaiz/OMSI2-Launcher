@@ -201,6 +201,7 @@ pub fn launch(
     mode: LoadMode,
     time: &TimeChoice,
     situation: Option<(&str, usize)>,
+    spawn: Option<&str>,
     status: impl Fn(&str),
     on_start_screen: impl Fn(),
 ) -> Result<(), String> {
@@ -286,6 +287,9 @@ pub fn launch(
     if let LoadMode::Tutorial(n) = mode {
         pick_tutorial(n, plugin, &status)?;
         return Ok(());
+    }
+    if let (LoadMode::NoBuses, Some(place)) = (mode, spawn) {
+        pick_spawn(place, &status)?;
     }
     status(tr("Cargando el mapa en OMSI 2..."));
     Ok(())
@@ -542,4 +546,109 @@ pub fn browse_folder(title: &str) -> Option<PathBuf> {
 /// Opens a folder (or a web address) with Windows.
 pub fn open_folder(dir: &Path) {
     let _ = Command::new("explorer").arg(dir).spawn();
+}
+
+/// The places OMSI offers to appear at when a map is loaded without buses: the names of the map's `[entrypoints]` (global.cfg), once
+/// each and in alphabetical order, the way OMSI's "Establecer posición" window lists them. Empty when the map has none.
+pub fn entry_points(omsi: &Path, map: &MapInfo) -> Vec<String> {
+    let Some(cfg) = read_cfg(&omsi.join("maps").join(&map.folder).join("global.cfg")) else { return vec![] };
+    let mut names: Vec<String> = Vec::new();
+    let mut inside = false;
+    for line in cfg.lines().map(str::trim) {
+        // a section tag is a lone "[word]"; a place name may also start with brackets ("[25 DIM] Conleau")
+        let is_tag = line.starts_with('[') && line.ends_with(']') && !line.contains(' ') && line.matches('[').count() == 1;
+        if is_tag {
+            inside = line.eq_ignore_ascii_case("[entrypoints]");
+            continue;
+        }
+        // every entry has one text line (its name); the rest are numbers
+        if inside && !line.is_empty() && line.parse::<f64>().is_err() && !names.iter().any(|n| n.eq_ignore_ascii_case(line)) {
+            names.push(line.to_string());
+        }
+    }
+    names.sort_by_key(|n| n.to_lowercase());
+    names
+}
+
+/// Answers OMSI's "Establecer posición" window (shown after ¡Iniciar! when the map is loaded without buses): picks `place` in its
+/// list and presses Accept. Waits while OMSI loads; gives up if OMSI closes.
+fn pick_spawn(place: &str, status: &impl Fn(&str)) -> Result<(), String> {
+    status(tr("Esperando la ventana de posición inicial de OMSI..."));
+    let deadline = Instant::now() + Duration::from_secs(1800);
+    let window = loop {
+        let found = top_windows().into_iter().find(|&w| class_name(w) == "Tform_setpos" && unsafe { IsWindowVisible(w) } != 0);
+        if let Some(w) = found {
+            break w;
+        }
+        if !omsi_running() {
+            return Err(tr("OMSI se cerró antes de pedir la posición inicial.").into());
+        }
+        if Instant::now() > deadline {
+            return Err(tr("No apareció la ventana de posición inicial de OMSI.").into());
+        }
+        std::thread::sleep(Duration::from_millis(200));
+    };
+    status(tr("Eligiendo el punto de aparición..."));
+    std::thread::sleep(Duration::from_millis(400));
+    let kids = children(window);
+    let Some(list) = kids.iter().copied().find(|&c| class_name(c) == "TListBox") else {
+        return Err(tr("La ventana de posición inicial de OMSI no tiene la lista esperada.").into());
+    };
+    let n = unsafe { SendMessageW(list, LB_GETCOUNT, 0, 0) }.max(0) as usize;
+    let items: Vec<String> = (0..n)
+        .map(|i| {
+            let len = unsafe { SendMessageW(list, LB_GETTEXTLEN, i, 0) }.max(0) as usize;
+            let mut b = vec![0u16; len + 1];
+            unsafe { SendMessageW(list, LB_GETTEXT, i, b.as_mut_ptr() as LPARAM) };
+            String::from_utf16_lossy(&b[..len])
+        })
+        .collect();
+    let Some(at) = items.iter().position(|t| t.trim().eq_ignore_ascii_case(place.trim())) else {
+        return Err(trf("OMSI no lista el punto \"{}\".", &[place]));
+    };
+    unsafe {
+        SendMessageW(list, LB_SETCURSEL, at, 0);
+        let id = (GetDlgCtrlID(list) as usize) & 0xFFFF;
+        SendMessageW(window, WM_COMMAND, id | ((LBN_SELCHANGE as usize) << 16), list as LPARAM);
+    }
+    std::thread::sleep(Duration::from_millis(400));
+    // the Accept button is the left one of the two buttons
+    let accept = kids.iter().copied().filter(|&c| class_name(c) == "TButton").min_by_key(|&c| rect_of(c).left);
+    match accept {
+        Some(b) => press(b),
+        None => return Err(tr("No se encontró el botón Aceptar de OMSI.").into()),
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod spawn_tests {
+    use super::*;
+
+    #[test]
+    fn grundorf_entry_points_match_omsis_list() {
+        let Some(omsi) = find_omsi_dir(None) else { return };
+        let Some(map) = list_maps(&omsi).into_iter().find(|m| m.name == "Grundorf") else { return };
+        assert_eq!(entry_points(&omsi, &map), ["Einsteindorf Krankenhaus", "Nordspitze Bauernhof", "Nordspitze Bhf."]);
+    }
+}
+
+#[cfg(test)]
+mod spawn_name_tests {
+    use super::*;
+
+    #[test]
+    fn place_names_may_start_with_brackets() {
+        let dir = std::env::temp_dir().join(format!("omsi2l-spawn-{}", std::process::id()));
+        let map_dir = dir.join("maps").join("T");
+        std::fs::create_dir_all(&map_dir).unwrap();
+        std::fs::write(
+            map_dir.join("global.cfg"),
+            "[name]\nT\n\n[entrypoints]\n2\n1\n10\n0\n1.0\n2.0\n3.0\n0\n0\n0\n1\n5\n[25 DIM] Conleau\n7\n11\n0\n1.0\n2.0\n3.0\n0\n0\n0\n1\n5\nAuray [200][201]\n\n[map]\n1\n",
+        )
+        .unwrap();
+        let map = MapInfo { folder: "T".into(), name: "T".into(), friendly: "T".into(), description: String::new(), picture: None };
+        assert_eq!(entry_points(&dir, &map), ["[25 DIM] Conleau", "Auray [200][201]"]);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
 }

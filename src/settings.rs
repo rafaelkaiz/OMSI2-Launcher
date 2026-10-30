@@ -46,7 +46,7 @@ fn lang_from_locale(name: &str) -> Lang {
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { theme: Theme::Original, omsi_dir: None, windowed: false, lang: Lang::Es, close_on_start: true, always_on_top: true, fullscreen: true, remove_nocheck: true }
+        Self { theme: Theme::Light, omsi_dir: None, windowed: false, lang: Lang::Es, close_on_start: true, always_on_top: true, fullscreen: true, remove_nocheck: true }
     }
 }
 
@@ -91,7 +91,7 @@ impl Settings {
             u8::from(self.close_on_start),
             u8::from(self.always_on_top),
             u8::from(self.fullscreen),
-            u8::from(self.remove_nocheck)
+            u8::from(self.remove_nocheck),
         );
         std::fs::write(path, text).map_err(|e| trf("No se pudieron guardar los ajustes: {}", &[&e.to_string()]))
     }

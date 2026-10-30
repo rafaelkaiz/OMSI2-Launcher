@@ -31,7 +31,7 @@ impl Theme {
     }
 
     pub fn from_key(s: &str) -> Theme {
-        Theme::ALL.into_iter().find(|t| t.key() == s).unwrap_or(Theme::Original)
+        Theme::ALL.into_iter().find(|t| t.key() == s).unwrap_or(Theme::Light)
     }
 
     fn palette(self) -> Palette {

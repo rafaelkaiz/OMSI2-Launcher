@@ -83,6 +83,7 @@ enum Preset {
 struct App {
     settings: settings::Settings,
     settings_open: bool,
+    settings_tab: usize,
     tut_open: bool,
     tut_sel: usize,
     tut_entries: Vec<tutorials::Entry>,
@@ -110,6 +111,9 @@ struct App {
     confirm_delete: Option<usize>,
     situations: Vec<situations::Situation>,
     sit_sel: Option<usize>,
+    spawn_sel: usize,
+    spawn_points: Vec<String>,
+    spawn_map: Option<usize>,
     sit_only_map: bool,
     stations: Vec<String>,
     chrono_cache: Option<((String, chrono::Date, &'static str), String)>,
@@ -214,6 +218,7 @@ impl App {
             mode: LoadMode::LastState,
             settings,
             settings_open: std::env::var("OMSI2_OPEN").as_deref() == Ok("settings"), // dev shortcut for screenshots
+            settings_tab: std::env::var("OMSI2_TAB").ok().and_then(|t| t.parse().ok()).unwrap_or(0),
             tut_open: false,
             tut_sel: 0,
             tut_entries: vec![],
@@ -224,6 +229,9 @@ impl App {
             confirm_delete: None,
             situations: sit_list,
             sit_sel: None,
+            spawn_sel: 0,
+            spawn_points: Vec::new(),
+            spawn_map: None,
             sit_only_map: true,
             stations: station_list,
             chrono_cache: None,
@@ -281,6 +289,7 @@ impl App {
             _ => omsi::TimeChoice::Situation,
         };
         let situation = self.sit_sel.and_then(|i| self.situations.get(i)).map(|s| (s.name.clone(), s.occurrence));
+        let spawn = (mode == LoadMode::NoBuses).then(|| self.spawn_points.get(self.spawn_sel).cloned()).flatten();
         let (restore_flag, raise_flag) = (self.restore_view.clone(), self.raise_view.clone());
         let (close_flag, close_on, minimize_flag) = (self.close_requested.clone(), self.settings.close_on_start, self.minimize_requested.clone());
         self.load_started = Some(Instant::now());
@@ -299,7 +308,7 @@ impl App {
                 ctx.request_repaint();
             };
             let sit = situation.as_ref().map(|(n, o)| (n.as_str(), *o));
-            match omsi::launch(&dir, &map, driver.as_deref(), windowed, mode, &time, sit, &set, || {
+            match omsi::launch(&dir, &map, driver.as_deref(), windowed, mode, &time, sit, spawn.as_deref(), &set, || {
                 raise_flag.store(true, Ordering::Relaxed);
                 ctx.request_repaint();
             }) {
@@ -531,7 +540,10 @@ impl App {
         let mut plugin_msg: Option<String> = None;
         let mut open_url: Option<String> = None;
         // one rounded card per topic, each with its title
-        let card = |ui: &mut egui::Ui, title: &str, add: &mut dyn FnMut(&mut egui::Ui)| {
+        let card = |ui: &mut egui::Ui, title: &str, show: bool, add: &mut dyn FnMut(&mut egui::Ui)| {
+            if !show {
+                return;
+            }
             egui::Frame::new()
                 .fill(ui.visuals().faint_bg_color)
                 .stroke(ui.visuals().widgets.noninteractive.bg_stroke)
@@ -549,8 +561,21 @@ impl App {
             ui.set_min_width(780.0);
             ui.label(RichText::new(tr("Estos ajustes son del launcher; las opciones de OMSI 2 están en el botón Opciones.")).italics().size(12.0));
             ui.add_space(8.0);
-            egui::ScrollArea::vertical().max_height((ctx.content_rect().height() * 0.72).clamp(240.0, 720.0)).auto_shrink([false, true]).show(ui, |ui| {
-                card(ui, tr("Apariencia"), &mut |ui| {
+            // one button per section, like OMSI's own tabs
+            ui.horizontal(|ui| {
+                for (i, name) in [tr("Apariencia"), "OMSI 2", "Plugin", tr("Copias de seguridad"), tr("Actualizaciones")].into_iter().enumerate() {
+                    let on = self.settings_tab == i;
+                    let b = egui::Button::new(RichText::new(name).strong().color(if on { Color32::WHITE } else { pal().text }))
+                        .fill(if on { pal().dark } else { pal().field })
+                        .min_size(egui::vec2(0.0, 30.0));
+                    if ui.add(b).clicked() {
+                        self.settings_tab = i;
+                    }
+                }
+            });
+            ui.add_space(8.0);
+            egui::ScrollArea::vertical().max_height(240.0).min_scrolled_height(240.0).auto_shrink([false, false]).show(ui, |ui| {
+                card(ui, tr("Apariencia"), self.settings_tab == 0, &mut |ui| {
                     ui.horizontal(|ui| {
                         ui.label(tr("Idioma del launcher"));
                         egui::ComboBox::from_id_salt("launcher_lang").selected_text(self.settings.lang.name()).show_ui(ui, |ui| {
@@ -579,7 +604,7 @@ impl App {
                         changed = true;
                     }
                 });
-                card(ui, "OMSI 2", &mut |ui| {
+                card(ui, "OMSI 2", self.settings_tab == 1, &mut |ui| {
                     changed |= ui.checkbox(&mut self.settings.windowed, tr("Abrir OMSI en modo ventana")).changed();
                     changed |= ui.checkbox(&mut self.settings.close_on_start, tr("Cerrar el launcher al iniciar OMSI")).changed();
                     changed |= ui.checkbox(&mut self.settings.remove_nocheck, tr("Eliminar el archivo \"nocheck\" cuando OMSI 2 falle")).changed();
@@ -602,7 +627,7 @@ impl App {
                     });
                     ui.label(RichText::new(tr("(la carpeta nueva se usa al reiniciar el launcher)")).italics().size(12.0));
                 });
-                card(ui, tr("Inicio directo (plugin)"), &mut |ui| {
+                card(ui, tr("Inicio directo (plugin)"), self.settings_tab == 2, &mut |ui| {
                     ui.label(RichText::new(tr("Añade dos archivos nuevos a la carpeta plugins de OMSI (OMSI2Launcher.opl y OMSI2LauncherPlugin.dll) y no modifica ninguno existente. Con él, ¡Iniciar! se pulsa dentro de OMSI en vez de hacer clic con el ratón. Funciona la próxima vez que abras OMSI.")).italics().size(12.0));
                     ui.label(plugin::status_text(self.omsi.as_deref()));
                     let can_touch = self.omsi.is_some() && !self.running.1;
@@ -626,7 +651,7 @@ impl App {
                         }
                     });
                 });
-                card(ui, tr("Copias de seguridad"), &mut |ui| {
+                card(ui, tr("Copias de seguridad"), self.settings_tab == 3, &mut |ui| {
                     ui.label(RichText::new(tr("Se conservan las 3 últimas copias de cada archivo; al hacer una nueva se borra la más antigua.")).italics().size(12.0));
                     if ui.button(tr("Abrir carpeta de copias")).clicked() {
                         let dir = cfg::backup_dir();
@@ -634,7 +659,7 @@ impl App {
                         omsi::open_folder(&dir);
                     }
                 });
-                card(ui, tr("Actualizaciones"), &mut |ui| {
+                card(ui, tr("Actualizaciones"), self.settings_tab == 4, &mut |ui| {
                     ui.label(trf("Versión instalada: {}", &[update::LABEL]));
                     let state = self.update.lock().unwrap().clone();
                     ui.horizontal(|ui| {
@@ -1097,7 +1122,7 @@ impl eframe::App for App {
             });
             ui.add_space(4.0);
             ui.horizontal(|ui| {
-                let w = (ui.available_width() - 4.0 * ui.spacing().item_spacing.x) / 4.0;
+                let w = (ui.available_width() - 3.0 * ui.spacing().item_spacing.x) / 4.0;
                 let go = egui::Button::new(RichText::new(tr("¡Iniciar!")).size(22.0).color(Color32::WHITE))
                     .fill(pal().dark)
                     .corner_radius(0.0)
@@ -1165,6 +1190,29 @@ impl eframe::App for App {
                     ui.add_space(6.0);
                     ui.radio_value(&mut self.mode, LoadMode::LastState, tr("Cargar último estado del mapa"));
                     ui.radio_value(&mut self.mode, LoadMode::NoBuses, tr("Cargar mapa sin autobuses"));
+                    if self.mode == LoadMode::NoBuses {
+                        // OMSI's "Establecer posición" window is answered here, before starting: the map's places to appear at
+                        if self.spawn_map != Some(self.map) {
+                            self.spawn_map = Some(self.map);
+                            self.spawn_sel = 0;
+                            self.spawn_points = match (&self.omsi, self.maps.get(self.map)) {
+                                (Some(o), Some(m)) => omsi::entry_points(o, m),
+                                _ => vec![],
+                            };
+                        }
+                        if !self.spawn_points.is_empty() {
+                            ui.horizontal(|ui| {
+                                ui.add_space(20.0);
+                                ui.label(tr("Aparecer en:"));
+                                let current = self.spawn_points.get(self.spawn_sel).cloned().unwrap_or_default();
+                                egui::ComboBox::from_id_salt("spawn_point").selected_text(current).width(ui.available_width() - 8.0).show_ui(ui, |ui| {
+                                    for (i, p) in self.spawn_points.iter().enumerate() {
+                                        ui.selectable_value(&mut self.spawn_sel, i, p);
+                                    }
+                                });
+                            });
+                        }
+                    }
                     ui.radio_value(&mut self.mode, LoadMode::SavedSituation, tr("Cargar situación guardada"));
                     if self.mode == LoadMode::SavedSituation {
                         // OMSI shows the saved situations in place of the map picture.
@@ -1248,6 +1296,8 @@ fn set_fullscreen(ctx: &egui::Context, on: bool) {
 }
 
 fn main() -> eframe::Result {
+    // a crash leaves a line in launcher.log (a panic would otherwise close the window without a trace)
+    std::panic::set_hook(Box::new(|info| log::line(&format!("PANIC: {info}"))));
     let _ = settings::Settings::load();
     let mut viewport = egui::ViewportBuilder::default()
         .with_title("OMSI 2 Launcher")

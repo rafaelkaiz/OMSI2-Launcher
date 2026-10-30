@@ -68,6 +68,9 @@ static PREV_PROC: AtomicIsize = AtomicIsize::new(0);
 static FORM_OBJECT: AtomicU32 = AtomicU32::new(0);
 static SENDER_OBJECT: AtomicU32 = AtomicU32::new(0);
 static CURRENT: Mutex<Option<usize>> = Mutex::new(None);
+/// The worker thread, kept so that PluginFinalize can wait for it: OMSI unloads this DLL right after PluginFinalize returns, and a
+/// thread still running (or just ending) inside it would crash OMSI when it closes.
+static WORKER: Mutex<Option<std::thread::JoinHandle<()>>> = Mutex::new(None);
 
 fn dir() -> PathBuf {
     let base = std::env::var_os("APPDATA").map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
@@ -283,13 +286,19 @@ fn worker() {
 #[no_mangle]
 pub extern "system" fn PluginStart(_owner: u32) {
     if !STARTED.swap(true, Ordering::SeqCst) {
-        std::thread::spawn(worker);
+        if let Ok(mut w) = WORKER.lock() {
+            *w = Some(std::thread::spawn(worker));
+        }
     }
 }
 
 #[no_mangle]
 pub extern "system" fn PluginFinalize() {
     STOP.store(true, Ordering::SeqCst);
+    let handle = WORKER.lock().ok().and_then(|mut w| w.take());
+    if let Some(h) = handle {
+        let _ = h.join();
+    }
 }
 
 // The variable and trigger accessors are required by OMSI but this plugin has no variables or triggers.

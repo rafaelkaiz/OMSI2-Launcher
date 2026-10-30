@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex};
 pub const REPO: &str = "rafaelkaiz/OMSI2-Launcher";
 
 /// The version as people read it ("0.9-beta1"); `VERSION` is the same in the form Cargo and the version comparison use.
-pub const LABEL: &str = "0.9-beta1";
+pub const LABEL: &str = "0.9-beta2";
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
