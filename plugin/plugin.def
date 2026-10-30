@@ -1,0 +1,8 @@
+LIBRARY OMSI2LauncherPlugin
+EXPORTS
+    PluginStart
+    PluginFinalize
+    AccessVariable
+    AccessSystemVariable
+    AccessStringVariable
+    AccessTrigger

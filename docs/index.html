@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OMSI 2 Launcher</title>
+<meta name="description" content="A fast, modern launcher for the vanilla OMSI 2 bus simulator: pick map, driver, date and time and start with one click.">
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #ffffff; --text: #23262b; --muted: #5c636d; --line: #e1e4e8;
+    --orange: #e7770f; --orange-dark: #c9610a; --grey: #8c929b; --hero: #1d1f23; --hero-text: #f2f3f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17181b; --card: #212328; --text: #e9eaed; --muted: #a0a6b0; --line: #33363d;
+      --hero: #0f1012; --hero-text: #f2f3f5;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17181b; --card: #212328; --text: #e9eaed; --muted: #a0a6b0; --line: #33363d;
+    --hero: #0f1012; --hero-text: #f2f3f5;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--orange-dark); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) a { color: #ffa24d; } }
+  :root[data-theme="dark"] a { color: #ffa24d; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+  nav { display: flex; align-items: center; gap: 16px; padding: 14px 0; }
+  nav .brand { font-weight: 700; letter-spacing: .3px; margin-right: auto; color: var(--hero-text); }
+  nav a, nav button { color: var(--hero-text); text-decoration: none; font-size: 14px; opacity: .85; }
+  nav button { background: none; border: 1px solid #ffffff55; border-radius: 6px; padding: 3px 10px; cursor: pointer; font: inherit; font-size: 13px; }
+  nav a:hover, nav button:hover { opacity: 1; }
+  .hero { background: var(--hero); color: var(--hero-text); border-bottom: 6px solid var(--orange); }
+  .hero-inner { display: grid; grid-template-columns: 1fr 1.15fr; gap: 32px; align-items: center; padding: 28px 0 44px; }
+  .hero h1 { font-size: clamp(30px, 5vw, 46px); line-height: 1.1; margin: 8px 0 14px; }
+  .hero h1 span span { color: var(--orange); }
+  .hero p { color: #c9ccd2; margin: 0 0 22px; max-width: 46ch; }
+  .badge { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .5px; text-transform: uppercase; border: 1px solid var(--orange); color: var(--orange); border-radius: 99px; padding: 2px 12px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn { display: inline-block; padding: 11px 22px; border-radius: 6px; font-weight: 600; text-decoration: none; background: var(--orange); color: #fff !important; }
+  .btn:hover { background: var(--orange-dark); }
+  .btn.ghost { background: transparent; border: 1px solid #ffffff55; }
+  .btn.ghost:hover { background: #ffffff14; }
+  .shot { width: 100%; border-radius: 8px; border: 1px solid #ffffff22; box-shadow: 0 18px 50px #0008; display: block; }
+  section { padding: 54px 0 6px; }
+  h2 { font-size: 26px; margin: 0 0 6px; }
+  h2::after { content: ""; display: block; width: 46px; height: 4px; background: var(--orange); margin-top: 8px; border-radius: 2px; }
+  .lead { color: var(--muted); max-width: 70ch; margin: 14px 0 26px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 18px 18px 16px; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .shots figure { margin: 0; }
+  .shots img { width: 100%; border-radius: 6px; border: 1px solid var(--line); display: block; }
+  .shots figcaption { color: var(--muted); font-size: 14px; margin-top: 6px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 15px; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: color-mix(in srgb, var(--orange) 12%, var(--card)); font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  code { background: color-mix(in srgb, var(--grey) 22%, transparent); padding: 1px 6px; border-radius: 4px; font-size: .92em; }
+  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 0; display: grid; gap: 12px; }
+  ol.steps li { counter-increment: s; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px 14px 62px; position: relative; }
+  ol.steps li::before { content: counter(s); position: absolute; left: 16px; top: 12px; width: 32px; height: 32px; border-radius: 50%; background: var(--orange); color: #fff; font-weight: 700; display: grid; place-items: center; }
+  ul.plain { padding-left: 20px; color: var(--muted); }
+  footer { margin-top: 60px; padding: 26px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+  [data-l] { display: none; }
+  html[lang="en"] [data-l="en"], html[lang="es"] [data-l="es"] { display: revert; }
+  @media (max-width: 820px) { .hero-inner { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <nav>
+      <span class="brand">OMSI 2 Launcher</span>
+      <a href="#features"><span data-l="en">Features</span><span data-l="es">Funciones</span></a>
+      <a href="#safe"><span data-l="en">Safety</span><span data-l="es">Seguridad</span></a>
+      <a href="#install"><span data-l="en">Install</span><span data-l="es">Instalar</span></a>
+      <a href="https://github.com/rafaelkaiz/OMSI2-Launcher">GitHub</a>
+      <button id="lang" type="button" aria-label="Language">ES</button>
+    </nav>
+    <div class="hero-inner">
+      <div>
+        <span class="badge">0.9-beta1</span>
+        <h1><span data-l="en">Start <span>OMSI 2</span> in one click.</span><span data-l="es">Inicia <span>OMSI 2</span> con un clic.</span></h1>
+        <p>
+          <span data-l="en">A fast, modern launcher for the vanilla OMSI 2 bus simulator. Pick the map, driver, date and time, press Start, and OMSI loads the map for you.</span>
+          <span data-l="es">Un launcher rápido y moderno para el simulador de autobuses OMSI 2 original. Elige mapa, conductor, fecha y hora, pulsa Iniciar y OMSI carga el mapa por ti.</span>
+        </p>
+        <div class="btns">
+          <a class="btn" href="https://github.com/rafaelkaiz/OMSI2-Launcher/releases"><span data-l="en">Download</span><span data-l="es">Descargar</span></a>
+          <a class="btn ghost" href="https://github.com/rafaelkaiz/OMSI2-Launcher"><span data-l="en">Source code</span><span data-l="es">Código fuente</span></a>
+        </div>
+      </div>
+      <img class="shot" src="img/launcher.png" alt="OMSI 2 Launcher main window">
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="features">
+    <h2><span data-l="en">What it does</span><span data-l="es">Qué hace</span></h2>
+    <p class="lead">
+      <span data-l="en">Everything the OMSI 2 start screen does, without clicking through it every time, and a few things it does not.</span>
+      <span data-l="es">Todo lo que hace la pantalla de inicio de OMSI 2, sin tener que pasar por ella cada vez, y alguna cosa que no hace.</span>
+    </p>
+    <div class="grid">
+      <div class="card"><h3><span data-l="en">One-click start</span><span data-l="es">Inicio con un clic</span></h3><p><span data-l="en">Opens OMSI 2, picks your map and driver, and loads the last map state, the map without buses, or a saved situation.</span><span data-l="es">Abre OMSI 2, elige tu mapa y conductor y carga el último estado, el mapa sin autobuses o una situación guardada.</span></p></div>
+      <div class="card"><h3><span data-l="en">Date, time and weather</span><span data-l="es">Fecha, hora y tiempo</span></h3><p><span data-l="en">Use the map's, the current ones, or your own, with Morning, Day, Afternoon and Night shortcuts and the ICAO weather station.</span><span data-l="es">Usa las del mapa, las actuales o las tuyas, con atajos Mañana, Día, Tarde y Noche y la estación meteorológica ICAO.</span></p></div>
+      <div class="card"><h3><span data-l="en">OMSI's options, rebuilt</span><span data-l="es">Las opciones de OMSI, reconstruidas</span></h3><p><span data-l="en">The same tabs and layout as the original, plus option presets you can load and save.</span><span data-l="es">Las mismas pestañas y disposición que el original, más presets de opciones que puedes cargar y guardar.</span></p></div>
+      <div class="card"><h3><span data-l="en">Drivers and staff file</span><span data-l="es">Conductores y expediente</span></h3><p><span data-l="en">Edit, create and delete drivers and read their stops, distance, comfort rating and buses.</span><span data-l="es">Edita, crea y elimina conductores y consulta paradas, distancia, valoración de confort y autobuses.</span></p></div>
+      <div class="card"><h3><span data-l="en">Tutorials</span><span data-l="es">Tutoriales</span></h3><p><span data-l="en">Start tutorials 1 to 4 straight from the launcher.</span><span data-l="es">Inicia los tutoriales 1 a 4 directamente desde el launcher.</span></p></div>
+      <div class="card"><h3><span data-l="en">7 languages, 3 themes</span><span data-l="es">7 idiomas, 3 temas</span></h3><p><span data-l="en">Español, English, Deutsch, Polski, Čeština, Français and Português; original orange, dark and light.</span><span data-l="es">Español, English, Deutsch, Polski, Čeština, Français y Português; naranja original, oscuro y claro.</span></p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span data-l="en">A look</span><span data-l="es">Un vistazo</span></h2>
+    <p class="lead"><span data-l="en">Full screen like OMSI's own start screen, with a loading screen that stays up until the map is loading.</span><span data-l="es">A pantalla completa como la propia pantalla de inicio de OMSI, con una pantalla de carga que se mantiene hasta que el mapa se está cargando.</span></p>
+    <div class="shots">
+      <figure><img src="img/options.png" alt="Options window" loading="lazy"><figcaption><span data-l="en">Options window</span><span data-l="es">Ventana de opciones</span></figcaption></figure>
+      <figure><img src="img/loading.png" alt="Loading screen" loading="lazy"><figcaption><span data-l="en">Loading screen</span><span data-l="es">Pantalla de carga</span></figcaption></figure>
+      <figure><img src="img/settings.png" alt="Launcher settings" loading="lazy"><figcaption><span data-l="en">Launcher settings</span><span data-l="es">Ajustes del launcher</span></figcaption></figure>
+    </div>
+  </section>
+
+  <section id="safe">
+    <h2><span data-l="en">It never touches your OMSI files</span><span data-l="es">No toca tus archivos de OMSI</span></h2>
+    <p class="lead"><span data-l="en">The original OMSI 2 files are never modified. This is everything the launcher writes, and nothing is written while OMSI is running.</span><span data-l="es">Los archivos originales de OMSI 2 nunca se modifican. Esto es todo lo que escribe el launcher, y no escribe nada mientras OMSI está en ejecución.</span></p>
+    <table>
+      <tr><th><span data-l="en">What</span><span data-l="es">Qué</span></th><th><span data-l="en">Where</span><span data-l="es">Dónde</span></th><th><span data-l="en">Safety</span><span data-l="es">Seguridad</span></th></tr>
+      <tr><td><code>options.cfg</code></td><td><span data-l="en">OMSI folder</span><span data-l="es">carpeta de OMSI</span></td><td><span data-l="en">Only when you press Accept in Options; backed up first</span><span data-l="es">Solo al pulsar Aceptar en Opciones; antes se hace copia de seguridad</span></td></tr>
+      <tr><td><code>Drivers\*.odr</code></td><td><span data-l="en">OMSI folder</span><span data-l="es">carpeta de OMSI</span></td><td><span data-l="en">Only when you edit, create or delete a driver; backed up first</span><span data-l="es">Solo al editar, crear o eliminar un conductor; antes se hace copia de seguridad</span></td></tr>
+      <tr><td><span data-l="en">New preset files</span><span data-l="es">Presets nuevos</span></td><td><code>option_presets\</code></td><td><span data-l="en">New files only; existing presets are never overwritten</span><span data-l="es">Solo archivos nuevos; nunca sobrescribe presets existentes</span></td></tr>
+      <tr><td><span data-l="en">Two plugin files</span><span data-l="es">Dos archivos del plugin</span></td><td><code>plugins\</code></td><td><span data-l="en">Only when you press Install plugin; removable from the same place</span><span data-l="es">Solo al pulsar Instalar plugin; se quitan desde el mismo sitio</span></td></tr>
+      <tr><td><span data-l="en">Settings, log, backups</span><span data-l="es">Ajustes, registro, copias</span></td><td><code>%APPDATA%\OMSI2-Launcher\</code></td><td><span data-l="en">The 3 newest backups of each file are kept</span><span data-l="es">Se conservan las 3 copias más recientes de cada archivo</span></td></tr>
+    </table>
+  </section>
+
+  <section id="install">
+    <h2><span data-l="en">Install</span><span data-l="es">Instalar</span></h2>
+    <p class="lead"><span data-l="en">Windows 10/11, 64-bit, with OMSI 2 version 2.3.004.</span><span data-l="es">Windows 10/11 de 64 bits, con OMSI 2 versión 2.3.004.</span></p>
+    <ol class="steps">
+      <li><span data-l="en">Download the <code>.zip</code> from the <a href="https://github.com/rafaelkaiz/OMSI2-Launcher/releases">releases page</a> and unzip it anywhere.</span><span data-l="es">Descarga el <code>.zip</code> de la <a href="https://github.com/rafaelkaiz/OMSI2-Launcher/releases">página de versiones</a> y descomprímelo donde quieras.</span></li>
+      <li><span data-l="en">Run <code>OMSI2-Launcher.exe</code>. It finds OMSI 2 by itself, or asks where it is.</span><span data-l="es">Ejecuta <code>OMSI2-Launcher.exe</code>. Encuentra OMSI 2 solo, o te pregunta dónde está.</span></li>
+      <li><span data-l="en">Open Launcher settings and press Install plugin (needed to start OMSI from the launcher in this version).</span><span data-l="es">Abre Ajustes del launcher y pulsa Instalar plugin (necesario para iniciar OMSI desde el launcher en esta versión).</span></li>
+      <li><span data-l="en">Choose your map and driver, then press Start.</span><span data-l="es">Elige mapa y conductor y pulsa Iniciar.</span></li>
+    </ol>
+    <p class="lead" style="margin-top:16px"><span data-l="en">The program is not code-signed, so Windows SmartScreen or your antivirus may warn about it the first time. It is a new, unknown file, not a detected threat, and the source is open for you to read and build.</span><span data-l="es">El programa no está firmado digitalmente, así que SmartScreen o tu antivirus pueden avisar la primera vez. Es un archivo nuevo y desconocido, no una amenaza detectada, y el código es abierto para que lo leas y compiles.</span></p>
+  </section>
+
+  <section>
+    <h2><span data-l="en">Beta notes</span><span data-l="es">Notas de la beta</span></h2>
+    <ul class="plain">
+      <li><span data-l="en">The Keyboard and Controller tabs of the options window are not implemented yet.</span><span data-l="es">Las pestañas Teclado y Controlador de las opciones aún no están implementadas.</span></li>
+      <li><span data-l="en">The plugin only recognises OMSI 2 2.3.004.</span><span data-l="es">El plugin solo reconoce OMSI 2 2.3.004.</span></li>
+      <li><span data-l="en">Polish and Czech translations are waiting for review by native speakers.</span><span data-l="es">Las traducciones al polaco y al checo esperan revisión de hablantes nativos.</span></li>
+      <li><span data-l="en">Found a bug? <a href="https://github.com/rafaelkaiz/OMSI2-Launcher/issues">Open an issue</a> with your <code>launcher.log</code>.</span><span data-l="es">¿Un fallo? <a href="https://github.com/rafaelkaiz/OMSI2-Launcher/issues">Abre una incidencia</a> con tu <code>launcher.log</code>.</span></li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span data-l="en">OMSI 2 is a product of MR-Software and Aerosoft. This is an unofficial community project, not affiliated with or endorsed by them, and it contains no OMSI 2 files. OMSI support and add-ons: <a href="https://forum.omnibussimulator.de/forum/">OMSI forum</a>.</span>
+    <span data-l="es">OMSI 2 es un producto de MR-Software y Aerosoft. Este es un proyecto comunitario no oficial, sin relación con ellos ni respaldado por ellos, y no contiene archivos de OMSI 2. Soporte y add-ons de OMSI: <a href="https://forum.omnibussimulator.de/forum/">foro de OMSI</a>.</span>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var btn = document.getElementById('lang');
+    var saved = null;
+    try { saved = localStorage.getItem('lang'); } catch (e) {}
+    var lang = saved || ((navigator.language || 'en').toLowerCase().indexOf('es') === 0 ? 'es' : 'en');
+    function apply(l) {
+      document.documentElement.lang = l;
+      btn.textContent = l === 'es' ? 'EN' : 'ES';
+      try { localStorage.setItem('lang', l); } catch (e) {}
+    }
+    btn.addEventListener('click', function () { apply(document.documentElement.lang === 'es' ? 'en' : 'es'); });
+    apply(lang);
+  })();
+</script>
+</body>
+</html>

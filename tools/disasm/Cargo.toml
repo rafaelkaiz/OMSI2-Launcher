@@ -1,0 +1,8 @@
+[package]
+name = "disasm"
+version = "0.1.0"
+edition = "2021"
+description = "Read-only helper: prints the x86 disassembly of a virtual-address range of a 32-bit Windows program."
+
+[dependencies]
+iced-x86 = { version = "1", default-features = false, features = ["std", "decoder", "intel", "instr_info"] }
