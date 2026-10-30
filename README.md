@@ -8,7 +8,7 @@
 
 ## What it does
 
-- **Starts OMSI 2 and loads your map** with the driver you choose: last map state, map without buses, or a saved situation.
+- **One-click start**: open OMSI 2 Launcher, pick your map and driver, and it starts OMSI 2 and loads the map: last map state, map without buses, or a saved situation.
 - **Date and time**: use the map's, the current ones, or choose them (with the *Morning 07:00 / Day 12:00 / Afternoon 17:00 / Night 00:00* shortcuts), plus the weather station (ICAO).
 - **Choose where to appear**: with "Load map without buses", pick the map's start place in the launcher and it answers OMSI's "Set position" window for you.
 - **Tutorials 1–4** straight from the launcher.

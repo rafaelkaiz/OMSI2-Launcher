@@ -8,7 +8,7 @@
 
 ## Qué hace
 
-- **Abre OMSI 2 y carga tu mapa** con el conductor que elijas: último estado del mapa, mapa sin autobuses o una situación guardada.
+- **Inicio con un clic**: abre OMSI 2 Launcher, elige tu mapa y conductor y él inicia OMSI 2 y carga el mapa: último estado, mapa sin autobuses o una situación guardada.
 - **Fecha y hora**: las del mapa, las actuales o las que elijas (con los atajos *Mañana 07:00 / Día 12:00 / Tarde 17:00 / Noche 00:00*), más la estación meteorológica (ICAO).
 - **Elige dónde aparecer**: con "Cargar mapa sin autobuses", eliges el punto de inicio del mapa en el launcher y él responde a la ventana "Establecer posición" de OMSI.
 - **Tutoriales 1–4** directamente desde el launcher.
