@@ -21,6 +21,12 @@
 
 ![Options](docs/img/options.png)
 
+![Launcher settings](docs/img/settings.png)
+
+![Staff file](docs/img/staff.png)
+
+![Tutorials](docs/img/tutorials.png)
+
 ## It never touches your OMSI files
 
 The launcher was built around one rule: **the original OMSI 2 files are never modified.** The only things it writes are:

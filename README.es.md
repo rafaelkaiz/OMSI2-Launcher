@@ -21,6 +21,12 @@
 
 ![Opciones](docs/img/options.png)
 
+![Ajustes del launcher](docs/img/settings.png)
+
+![Expediente del personal](docs/img/staff.png)
+
+![Tutoriales](docs/img/tutorials.png)
+
 ## No toca tus archivos de OMSI
 
 El launcher se hizo con una regla: **los archivos originales de OMSI 2 nunca se modifican.** Lo único que escribe es:
