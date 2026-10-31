@@ -221,7 +221,7 @@ impl App {
             tut_sel: 0,
             tut_entries: vec![],
             staff_open: std::env::var("OMSI2_OPEN").as_deref() == Ok("staff"), // dev shortcut for screenshots (OMSI2_TAB = page)
-            staff_sel: 0,
+            staff_sel: driver,
             staff_rec: None,
             staff_labels: Arc::new(HashMap::new()),
             confirm_delete: None,

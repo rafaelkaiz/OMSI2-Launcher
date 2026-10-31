@@ -2,20 +2,20 @@
 
 **Un launcher rápido y moderno para el simulador de autobuses OMSI 2 original.** Elige el mapa, el conductor, la fecha y la hora, pulsa *Iniciar* y OMSI 2 se abre y carga el mapa por ti, sin pasar a mano por la pantalla de inicio.
 
-> **Versión 0.9-beta2** — segunda versión pública de pruebas (mira las [notas de la versión](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [English](README.md) · [Página web](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Descargar](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
+> **Versión 0.9-beta3** — tercera versión pública de pruebas (mira las [notas de la versión](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [English](README.md) · [Página web](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Descargar](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
 
 ![El launcher](docs/img/launcher.png)
 
 ## Qué hace
 
 - **Inicio con un clic**: abre OMSI 2 Launcher, elige tu mapa y conductor y él inicia OMSI 2 y carga el mapa: último estado, mapa sin autobuses o una situación guardada.
-- **Fecha y hora**: las del mapa, las actuales o las que elijas (con los atajos *Mañana 07:00 / Día 12:00 / Tarde 17:00 / Noche 00:00*), más la estación meteorológica (ICAO).
+- **Fecha y hora**: como la pantalla de inicio de OMSI: se cambian en una ventana propia (hora, las cuatro franjas del día, fecha, día de la semana y festivos del mapa) o se deja la de la situación, más la estación meteorológica (ICAO).
 - **Elige dónde aparecer**: con "Cargar mapa sin autobuses", eliges el punto de inicio del mapa en el launcher y él responde a la ventana "Establecer posición" de OMSI.
 - **Tutoriales 1–4** directamente desde el launcher.
 - **La ventana de opciones de OMSI, reconstruida**: General, Avanzado, Gráficos, Gráficos (avanzado), Sonido y Tráfico IA, con la misma disposición que el original. Carga presets de opciones y guarda tus opciones actuales como un preset nuevo.
 - **Conductores**: edita, crea y elimina conductores, y consulta el expediente del personal (paradas, distancia, valoración de confort, autobuses conducidos).
 - **Aspecto de OMSI**: el diseño naranja original, más un tema oscuro y otro claro. Se abre a pantalla completa con una pantalla de carga que permanece hasta que OMSI está cargando el mapa (F11 alterna la pantalla completa).
-- **7 idiomas**: Español, English, Deutsch, Polski, Čeština, Français, Português. La primera vez elige el idioma de Windows.
+- **Idiomas**: Español, English, Deutsch, Polski, Čeština, Français y Português, más cualquier idioma de la carpeta `Languages` de OMSI (para los textos del launcher se añade un archivo `<CÓDIGO>.txt`; se crea una plantilla). La primera vez elige el idioma de Windows.
 - **Elimina el archivo `closecheck`** que OMSI deja tras un cierre inesperado (opcional).
 - **Busca versiones nuevas en GitHub** (solo te avisa; nunca descarga ni reemplaza nada por sí solo).
 
@@ -49,7 +49,7 @@ Por ahora el plugin solo reconoce **OMSI 2 versión 2.3.004**.
 
 ## Instalación
 
-1. Descarga `OMSI2-Launcher-0.9-beta2-win64.zip` de la [página de versiones](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) y descomprímelo donde quieras.
+1. Descarga `OMSI2-Launcher-0.9-beta3-win64.zip` de la [página de versiones](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) y descomprímelo donde quieras.
 2. Ejecuta `OMSI2-Launcher.exe`. Encuentra OMSI 2 solo (carpetas habituales de Steam o Aerosoft); si no puede, te pregunta dónde está.
 3. Abre **Ajustes del launcher** y pulsa **Instalar plugin**.
 4. Elige mapa y conductor y pulsa **Iniciar**.
