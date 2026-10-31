@@ -55,7 +55,7 @@ pub fn read(path: &Path) -> Option<Preset> {
 /// does not mention are switched off, because a preset describes the complete state.
 pub fn apply(options: &mut Options, preset: &Preset, managed_flags: &[&str]) {
     for (key, section, values) in &preset.entries {
-        // OMSI does not take these from a preset (checked: a preset with `nopreview` left it off)
+        // OMSI does not take these from a preset (checked with a preset that had other values)
         if IGNORED_BY_OMSI.iter().any(|k| k.eq_ignore_ascii_case(key)) {
             continue;
         }
@@ -83,8 +83,9 @@ pub fn apply(options: &mut Options, preset: &Preset, managed_flags: &[&str]) {
 
 const OPTIONAL_VALUES: [&str; 2] = ["radio", "screenratio"];
 
-/// Settings the game itself saves while playing; loading a preset does not change them in OMSI.
-const IGNORED_BY_OMSI: [&str; 1] = ["nopreview"];
+/// Settings the game itself saves while playing: checked in OMSI, loading a preset leaves them as they are (`texture` is the one of
+/// this kind that OMSI does take from a preset).
+const IGNORED_BY_OMSI: [&str; 5] = ["nopreview", "texFilter", "font_typewriter", "Editor_LinkAerial", "no_tex_low_high_switch"];
 
 /// Saves the current options as a NEW preset `option_presets\<name>.oop`. Never overwrites an existing preset.
 pub fn save_new(omsi: &Path, name: &str, options: &Options) -> Result<PathBuf, String> {
