@@ -55,6 +55,10 @@ pub fn read(path: &Path) -> Option<Preset> {
 /// does not mention are switched off, because a preset describes the complete state.
 pub fn apply(options: &mut Options, preset: &Preset, managed_flags: &[&str]) {
     for (key, section, values) in &preset.entries {
+        // OMSI does not take these from a preset (checked: a preset with `nopreview` left it off)
+        if IGNORED_BY_OMSI.iter().any(|k| k.eq_ignore_ascii_case(key)) {
+            continue;
+        }
         if values.is_empty() {
             options.set_flag(key, section, true);
         } else {
@@ -78,6 +82,9 @@ pub fn apply(options: &mut Options, preset: &Preset, managed_flags: &[&str]) {
 }
 
 const OPTIONAL_VALUES: [&str; 2] = ["radio", "screenratio"];
+
+/// Settings the game itself saves while playing; loading a preset does not change them in OMSI.
+const IGNORED_BY_OMSI: [&str; 1] = ["nopreview"];
 
 /// Saves the current options as a NEW preset `option_presets\<name>.oop`. Never overwrites an existing preset.
 pub fn save_new(omsi: &Path, name: &str, options: &Options) -> Result<PathBuf, String> {
@@ -159,5 +166,25 @@ mod optional_tests {
         let with = Preset { name: "y".into(), entries: vec![("radio".into(), "GENERAL".into(), vec!["http://other.test".into()])] };
         apply(&mut o, &with, &[]);
         assert_eq!(o.get("radio", 0).as_deref(), Some("http://other.test"));
+    }
+}
+
+#[cfg(test)]
+mod ignored_tests {
+    use super::*;
+
+    #[test]
+    fn a_preset_does_not_turn_nopreview_on() {
+        let d = std::env::temp_dir().join(format!("omsi2l-nopreview-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|t| t.as_nanos()).unwrap_or(0)));
+        std::fs::create_dir_all(&d).unwrap();
+        std::fs::write(d.join("options.cfg"), "[maxFPS]\n60\n").unwrap();
+        let mut o = Options::load(&d).unwrap();
+        let preset = Preset {
+            name: "x".into(),
+            entries: vec![("nopreview".into(), "GENERAL".into(), vec![]), ("maxFPS".into(), "GRAPHICS".into(), vec!["30".into()])],
+        };
+        apply(&mut o, &preset, &[]);
+        assert!(!o.has("nopreview"));
+        assert_eq!(o.get("maxFPS", 0).as_deref(), Some("30"));
     }
 }
