@@ -23,7 +23,7 @@
 
 ![Launcher settings](docs/img/settings.png)
 
-![Staff file](docs/img/staff.png)
+![Personnel file](docs/img/staff.png)
 
 ![Tutorials](docs/img/tutorials.png)
 

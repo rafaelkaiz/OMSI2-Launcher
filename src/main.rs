@@ -890,16 +890,14 @@ impl App {
                     pick::pick(ui, "driver", 150.0, &names, &mut self.driver);
                 });
                 let enabled = !running && self.omsi.is_some();
-                if ui.add_enabled(enabled && !self.drivers.is_empty(), egui::Button::new(tr("Editar conductor")).min_size(egui::vec2(300.0, 28.0))).clicked() {
-                    self.driver_edit = Some(DriverEdit::new(self.drivers.get(self.driver)));
-                }
-                if ui.add_enabled(enabled, egui::Button::new(tr("Crear nuevo conductor")).min_size(egui::vec2(300.0, 28.0))).clicked() {
-                    self.driver_edit = Some(DriverEdit::new(None));
-                }
-                if ui.add_enabled(!self.drivers.is_empty(), egui::Button::new(tr("Expediente del personal")).min_size(egui::vec2(300.0, 28.0))).clicked() {
+                // like OMSI's start screen: the staff file first, then a new driver (editing and deleting are in the staff file)
+                if ui.add_enabled(!self.drivers.is_empty(), egui::Button::new(tr("Abrir archivo de personal")).min_size(egui::vec2(300.0, 28.0))).clicked() {
                     self.staff_open = true;
                     self.staff_sel = self.driver;
                     self.staff_labels = Arc::new(self.omsi.as_deref().map(|d| olf::load(d, self.settings.lang)).unwrap_or_default());
+                }
+                if ui.add_enabled(enabled, egui::Button::new(tr("Crear nuevo conductor")).min_size(egui::vec2(300.0, 28.0))).clicked() {
+                    self.driver_edit = Some(DriverEdit::new(None));
                 }
                 if let Some(d) = self.drivers.get(self.driver) {
                     ui.label(format!("{} {:.1} km  ·  {} {}", tr("Distancia:"), d.hektometers as f64 / 10.0, tr("Paradas:"), d.stops));
@@ -961,14 +959,13 @@ impl App {
     fn weather_section(&mut self, ui: &mut egui::Ui) {
         ui.label(tr("Información sobre el tiempo seleccionado:"));
         let text = self.chrono_text();
-        if !text.is_empty() {
-            egui::Frame::new().fill(pal().field).stroke(egui::Stroke::new(1.0, pal().dark)).inner_margin(6).show(ui, |ui| {
-                egui::ScrollArea::vertical().id_salt("chrono").max_height(110.0).show(ui, |ui| {
-                    ui.set_width(ui.available_width());
-                    ui.add(egui::Label::new(RichText::new(text).strong().size(12.0)).wrap());
-                });
+        // the box is always there, empty when the map has no time information for the date (as in OMSI)
+        egui::Frame::new().fill(pal().field).stroke(egui::Stroke::new(1.0, pal().dark)).inner_margin(6).show(ui, |ui| {
+            egui::ScrollArea::vertical().id_salt("chrono").min_scrolled_height(110.0).max_height(110.0).auto_shrink([false, false]).show(ui, |ui| {
+                ui.set_width(ui.available_width());
+                ui.add(egui::Label::new(RichText::new(text).strong().size(12.0)).wrap());
             });
-        }
+        });
     }
 
     /// OMSI's "time information": the map's timetable/tariff periods that cover the selected date (cached until something changes).
@@ -1238,10 +1235,7 @@ impl eframe::App for App {
                 });
                 section(ui, |ui| self.driver_section(ui, running));
                 section(ui, |ui| self.time_section(ui, running));
-                // the box exists only when the map has time information for the date (it is empty otherwise)
-                if !self.chrono_text().is_empty() {
-                    section(ui, |ui| self.weather_section(ui));
-                }
+                section(ui, |ui| self.weather_section(ui));
 
                 // ------------------------------------------------------------------ right: map
                 let ui = &mut cols[1];
