@@ -1,6 +1,6 @@
 //! OMSI's option presets (`option_presets\*.oop`): same format as options.cfg. Loading one only changes the in-memory options;
-//! nothing is written until the user saves. The map, driver, language, radio, font, weather station and date/time settings are not
-//! part of what a preset changes.
+//! nothing is written until the user saves. Like in OMSI itself, a preset sets everything it contains: also the language, the last map
+//! and driver, the radio and the weather station.
 
 use crate::cfg::Options;
 use crate::i18n::{tr, trf};
@@ -12,21 +12,6 @@ pub struct Preset {
     pub entries: Vec<(String, String, Vec<String>)>,
 }
 
-const KEEP: [&str; 9] = [
-    "last_map",
-    "last_driver",
-    "language",
-    "radio",
-    "font_typewriter",
-    "currweather_icao",
-    "useacttime",
-    "useactdate",
-    "useactyear",
-];
-
-fn kept(key: &str) -> bool {
-    KEEP.contains(&key.to_lowercase().as_str())
-}
 
 pub fn list(omsi: &Path) -> Vec<PathBuf> {
     let mut v: Vec<PathBuf> = std::fs::read_dir(omsi.join("option_presets"))
@@ -70,9 +55,6 @@ pub fn read(path: &Path) -> Option<Preset> {
 /// does not mention are switched off, because a preset describes the complete state.
 pub fn apply(options: &mut Options, preset: &Preset, managed_flags: &[&str]) {
     for (key, section, values) in &preset.entries {
-        if kept(key) {
-            continue;
-        }
         if values.is_empty() {
             options.set_flag(key, section, true);
         } else {
@@ -82,7 +64,7 @@ pub fn apply(options: &mut Options, preset: &Preset, managed_flags: &[&str]) {
         }
     }
     for k in managed_flags {
-        if !kept(k) && !preset.entries.iter().any(|(pk, _, _)| pk.eq_ignore_ascii_case(k)) {
+        if !preset.entries.iter().any(|(pk, _, _)| pk.eq_ignore_ascii_case(k)) {
             options.set_flag(k, "", false);
         }
     }
@@ -133,18 +115,17 @@ mod tests {
     }
 
     #[test]
-    fn preset_changes_graphics_but_not_map_or_driver() {
+    fn preset_sets_everything_it_contains() {
         let omsi = Path::new(r"C:\Program Files (x86)\Steam\steamapps\common\OMSI 2");
         let Some(p) = list(omsi).into_iter().find(|p| p.to_string_lossy().contains("Addon HafenCity - Best Performance")) else { return };
         let preset = read(&p).unwrap();
         assert!(preset.entries.iter().any(|e| e.0 == "performance_maxObjDist"));
         let mut o = Options::load(omsi).unwrap();
-        let (map, driver) = (o.get("last_map", 0), o.get("last_driver", 0));
+        let (map, language) = (preset.entries.iter().find(|e| e.0 == "last_map").map(|e| e.2[0].clone()), preset.entries.iter().find(|e| e.0 == "language").map(|e| e.2[0].clone()));
         let want = preset.entries.iter().find(|e| e.0 == "performance_maxObjDist").unwrap().2[0].clone();
         apply(&mut o, &preset, &["sunglow", "noAutoSave", "useActDate"]);
         assert_eq!(o.get("performance_maxObjDist", 0), Some(want));
         assert_eq!(o.get("last_map", 0), map);
-        assert_eq!(o.get("last_driver", 0), driver);
-        assert!(o.has("useActDate") == Options::load(omsi).unwrap().has("useActDate"));
+        assert_eq!(o.get("language", 0), language);
     }
 }

@@ -15,6 +15,8 @@ pub struct State {
     pub open: bool,
     /// Unsaved changes in the in-memory options (from this window or from the start screen).
     pub dirty: bool,
+    /// A preset was just loaded: the start screen must follow it (map, driver, date and time mode).
+    pub preset_loaded: bool,
     tab: usize,
     was_open: bool,
     presets: Vec<PathBuf>,
@@ -131,6 +133,7 @@ pub fn show(ctx: &egui::Context, st: &mut State, options: &mut Option<Options>, 
             if cv.put(ui, cv.rect(455.0, 73.0, 94.0, 24.0), egui::Button::new(tr("Cargar")).min_size(egui::vec2(94.0, 24.0))).clicked() && !names.is_empty() {
                 if let Some(preset) = st.presets.get(st.preset).and_then(|p| presets::read(p)) {
                     presets::apply(options, &preset, &managed_flags());
+                    st.preset_loaded = true;
                     st.dirty = true;
                     msg = Some(trf("Preset \"{}\" cargado (sin guardar: pulsa Guardar en Opciones o ¡Iniciar!).", &[&preset.name]));
                 }

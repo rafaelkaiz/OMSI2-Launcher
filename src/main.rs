@@ -1323,6 +1323,9 @@ impl eframe::App for App {
         if let Some(msg) = options_ui::show(&ctx, &mut self.options_ui, &mut self.options, can_write, self.omsi.as_deref()) {
             self.set_status(&msg);
         }
+        if std::mem::take(&mut self.options_ui.preset_loaded) {
+            self.sync_from_options();
+        }
     }
 }
 
@@ -1464,5 +1467,23 @@ fn days_in_month(year: u32, month: u32) -> u32 {
         2 => 28,
         4 | 6 | 9 | 11 => 30,
         _ => 31,
+    }
+}
+
+impl App {
+    /// The start screen follows the options: the map and driver of `last_map` / `last_driver`, and whether the date and time are the
+    /// current ones. Used after loading a preset, which (like in OMSI) can change all of them.
+    fn sync_from_options(&mut self) {
+        let Some(o) = self.options.as_ref() else { return };
+        let last = |key: &str| o.get(key, 0).unwrap_or_default().to_lowercase();
+        let (last_map, last_driver) = (last("last_map"), last("last_driver"));
+        if let Some(i) = self.maps.iter().position(|m| last_map.contains(&format!("\\{}\\", m.folder.to_lowercase()))) {
+            self.map = i;
+        }
+        if let Some(i) = self.drivers.iter().position(|d| last_driver.ends_with(&d.path.file_name().unwrap_or_default().to_string_lossy().to_lowercase())) {
+            self.driver = i;
+        }
+        let use_now = ["useActTime", "useActDate", "useActYear"].iter().any(|k| o.has(k));
+        self.time_mode = if use_now { TimeMode::Now } else if self.time_mode == TimeMode::Now { TimeMode::Situation } else { self.time_mode };
     }
 }
