@@ -13,6 +13,8 @@ pub struct Situation {
     pub occurrence: usize,
     /// Date the situation is set on, from its `[time]` block.
     pub date: Option<crate::chrono::Date>,
+    /// Time of day the situation is set at (hour, minute, second).
+    pub time: Option<(u32, u32, u32)>,
 }
 
 fn decode(b: &[u8]) -> String {
@@ -50,8 +52,11 @@ pub fn list(omsi: &Path) -> Vec<Situation> {
     for f in files {
         let Some((name, description, map_folder)) = parse(&f) else { continue };
         let occurrence = out.iter().filter(|s| s.name.eq_ignore_ascii_case(&name)).count();
-        let date = crate::chrono::situation_date(&f);
-        out.push(Situation { name, description, map_folder, occurrence, date });
+        let (date, time) = match crate::chrono::situation_datetime(&f) {
+            Some((d, t)) => (Some(d), Some(t)),
+            None => (None, None),
+        };
+        out.push(Situation { name, description, map_folder, occurrence, date, time });
     }
     out.sort_by_key(|s| (s.name.to_lowercase(), s.occurrence));
     out

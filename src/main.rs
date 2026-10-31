@@ -67,7 +67,6 @@ impl DriverEdit {
 #[derive(Clone, Copy, PartialEq)]
 enum TimeMode {
     Situation,
-    Now,
     Custom,
 }
 
@@ -195,7 +194,6 @@ impl App {
         } else {
             tr("No encuentro OMSI 2. Pasa su carpeta como argumento o en OMSI_DIR.")
         };
-        let use_now = options.as_ref().is_some_and(|o| ["useActTime", "useActDate", "useActYear"].iter().any(|k| o.has(k)));
         let (y, m, d) = cfg::today();
         let sit_list = omsi.as_deref().map(situations::list).unwrap_or_default();
         let station_list = omsi.as_deref().map(weather::stations).unwrap_or_default();
@@ -203,7 +201,7 @@ impl App {
         options_ui.open = std::env::var("OMSI2_OPEN").as_deref() == Ok("options"); // dev shortcut for screenshots
         options_ui.set_tab(std::env::var("OMSI2_TAB").ok().and_then(|t| t.parse().ok()).unwrap_or(0));
         Self {
-            time_mode: if use_now { TimeMode::Now } else { TimeMode::Situation },
+            time_mode: TimeMode::Situation,
             date_touched: false,
             sec: 0,
             time_dialog: if std::env::var("OMSI2_OPEN").as_deref() == Ok("time") { Some(TimeDialog { time: (7, 14, 14), date: (7, 1, 2014), date_touched: true }) } else { None }, // dev shortcut for screenshots
@@ -274,12 +272,13 @@ impl App {
         if !self.plugin_ok {
             return;
         }
-        // "current date and time" is the time, the date and the year
-        if self.time_mode == TimeMode::Now {
+        // a date or time chosen here must not be overruled by the "use current date/time" options of OMSI
+        if self.time_mode == TimeMode::Custom {
             if let Some(o) = self.options.as_mut() {
-                for k in ["useActTime", "useActDate", "useActYear"] {
-                    if !o.has(k) {
-                        o.set_flag(k, "GENERAL", true);
+                let flags: &[&str] = if self.date_touched { &["useActTime", "useActDate", "useActYear"] } else { &["useActTime"] };
+                for k in flags {
+                    if o.has(k) {
+                        o.set_flag(k, "GENERAL", false);
                         self.options_ui.dirty = true;
                     }
                 }
@@ -871,49 +870,52 @@ impl App {
         });
     }
 
+    /// OMSI's own two choices: "Cambiar fecha y hora" (opens the date and time window) and "Establecer hora de la situación", with the
+    /// date and time that will be used shown underneath. Using the current time is an option of OMSI's Options window, not of this screen.
     fn time_section(&mut self, ui: &mut egui::Ui, running: bool) {
         if self.options.is_none() {
             return;
         }
-        let before = self.time_mode;
-        let mut mode = before;
         ui.label(RichText::new(tr("Fecha y hora")).strong());
-        ui.radio_value(&mut mode, TimeMode::Situation, tr("Usar la fecha y hora de la situación (del mapa)"));
-        ui.radio_value(&mut mode, TimeMode::Now, tr("Usar fecha/hora actuales:"));
-        ui.radio_value(&mut mode, TimeMode::Custom, tr("Elegir fecha y hora:"));
-        if mode != before {
-            self.time_mode = mode;
-            // The "use current" options only apply in the "actuales" mode; the others must have them off.
-            if let Some(o) = self.options.as_mut() {
-                for k in ["useActTime", "useActDate", "useActYear"] {
-                    o.set_flag(k, "GENERAL", mode == TimeMode::Now);
-                }
-            }
-            self.options_ui.dirty = true;
+        let change = ui.radio(self.time_mode == TimeMode::Custom, tr("Cambiar fecha y hora..."));
+        if change.clicked() {
+            // choosing it (or pressing it again) opens the window; Cancel leaves things as they were
+            self.time_dialog = Some(TimeDialog { time: (self.clock.0, self.clock.1, self.sec), date: self.date, date_touched: self.date_touched });
         }
-        match self.time_mode {
-            // "current date and time" means the time, the date and the year: no separate choices
-            TimeMode::Now => {}
-            TimeMode::Custom => {
-                // like OMSI: a summary and a button that opens the "Seleccionar hora y fecha" window
-                ui.horizontal(|ui| {
-                    ui.add_space(24.0);
-                    let date = if self.date_touched { format!("{:02}/{:02}/{}", self.date.0, self.date.1, self.date.2) } else { tr("la de la situación").to_string() };
-                    ui.label(format!("{} {}   {} {:02}:{:02}:{:02}", tr("Fecha:"), date, tr("Hora:"), self.clock.0, self.clock.1, self.sec));
-                });
-                ui.horizontal(|ui| {
-                    ui.add_space(24.0);
-                    if ui.button(tr("Cambiar fecha y hora...")).clicked() {
-                        self.time_dialog = Some(TimeDialog { time: (self.clock.0, self.clock.1, self.sec), date: self.date, date_touched: self.date_touched });
-                    }
-                });
-            }
-            TimeMode::Situation => {}
+        if ui.radio(self.time_mode == TimeMode::Situation, tr("Establecer hora de la situación")).clicked() {
+            self.time_mode = TimeMode::Situation;
         }
+        let (date, time) = self.shown_date_time();
+        ui.horizontal(|ui| {
+            ui.label(format!("{} {}", tr("Fecha:"), date.map(|(y, m, d)| format!("{d:02}/{m:02}/{y}")).unwrap_or_default()));
+            ui.add_space(16.0);
+            ui.label(format!("{} {}", tr("Hora:"), time.map(|(h, m, s)| format!("{h:02}:{m:02}:{s:02}")).unwrap_or_default()));
+        });
         if running && self.time_mode != TimeMode::Custom {
             ui.label(RichText::new(tr("OMSI está abierto: el cambio se aplicará la próxima vez que lo abras.")).italics());
         }
     }
+
+    /// The date and time the start screen shows: the chosen ones, or those of the situation (the selected saved one, else the map's last).
+    fn shown_date_time(&self) -> (Option<chrono::Date>, Option<(u32, u32, u32)>) {
+        let situation = self.sit_sel.and_then(|i| self.situations.get(i)).filter(|_| self.mode == LoadMode::SavedSituation);
+        let saved = match (&self.omsi, self.maps.get(self.map)) {
+            (Some(o), Some(m)) => chrono::situation_datetime(&o.join("maps").join(&m.folder).join("laststn.osn")),
+            _ => None,
+        };
+        let (sit_date, sit_time) = match situation {
+            Some(s) => (s.date, s.time),
+            None => (saved.map(|x| x.0), saved.map(|x| x.1)),
+        };
+        match self.time_mode {
+            TimeMode::Custom => (
+                if self.date_touched { Some((self.date.2 as i64, self.date.1, self.date.0)) } else { sit_date },
+                Some((self.clock.0, self.clock.1, self.sec)),
+            ),
+            TimeMode::Situation => (sit_date, sit_time),
+        }
+    }
+
 
     fn weather_section(&mut self, ui: &mut egui::Ui) {
         ui.label(tr("Información sobre el tiempo seleccionado:"));
@@ -954,7 +956,6 @@ impl App {
         let saved = || chrono::situation_date(&map_dir.join("laststn.osn"));
         let date = match (self.time_mode, self.date_touched, situation) {
             (TimeMode::Custom, true, _) => Some((self.date.2 as i64, self.date.1, self.date.0)),
-            (TimeMode::Now, _, _) => Some(cfg::today()),
             (_, _, Some(s)) => s.date.or_else(saved),
             _ => saved(),
         };
@@ -1448,6 +1449,7 @@ impl App {
             self.sec = dlg.time.2;
             self.date = dlg.date;
             self.date_touched = dlg.date_touched;
+            self.time_mode = TimeMode::Custom;
             self.time_dialog = None;
         } else if cancel {
             self.time_dialog = None;
@@ -1479,7 +1481,5 @@ impl App {
         if let Some(i) = self.drivers.iter().position(|d| last_driver.ends_with(&d.path.file_name().unwrap_or_default().to_string_lossy().to_lowercase())) {
             self.driver = i;
         }
-        let use_now = ["useActTime", "useActDate", "useActYear"].iter().any(|k| o.has(k));
-        self.time_mode = if use_now { TimeMode::Now } else if self.time_mode == TimeMode::Now { TimeMode::Situation } else { self.time_mode };
     }
 }

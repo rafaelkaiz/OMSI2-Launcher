@@ -6,8 +6,8 @@ use std::path::Path;
 
 pub type Date = (i64, u32, u32);
 
-/// The date of a saved situation (`.osn`): its `[time]` block is year, day of the year, hour, minute, second.
-pub fn situation_date(osn: &Path) -> Option<Date> {
+/// The date and time of day of a saved situation (`.osn`): its `[time]` block is year, day of the year, hour, minute, second.
+pub fn situation_datetime(osn: &Path) -> Option<(Date, (u32, u32, u32))> {
     let b = std::fs::read(osn).ok()?;
     let text = if let Some(rest) = b.strip_prefix(&[0xFF, 0xFE]) {
         String::from_utf16_lossy(&rest.chunks_exact(2).map(|c| u16::from_le_bytes([c[0], c[1]])).collect::<Vec<_>>())
@@ -18,8 +18,16 @@ pub fn situation_date(osn: &Path) -> Option<Date> {
     let i = lines.iter().position(|l| l.eq_ignore_ascii_case("[time]"))?;
     let year: i64 = lines.get(i + 1)?.parse().ok()?;
     let day: u32 = lines.get(i + 2)?.parse().ok()?;
-    from_year_day(year, day)
+    let part = |k: usize| lines.get(i + k).and_then(|s| s.replace(',', ".").parse::<f64>().ok()).map(|v| v as u32);
+    let time = (part(3).unwrap_or(0).min(23), part(4).unwrap_or(0).min(59), part(5).unwrap_or(0).min(59));
+    Some((from_year_day(year, day)?, time))
 }
+
+/// The date of a saved situation.
+pub fn situation_date(osn: &Path) -> Option<Date> {
+    situation_datetime(osn).map(|(d, _)| d)
+}
+
 
 fn leap(y: i64) -> bool {
     (y % 4 == 0 && y % 100 != 0) || y % 400 == 0

@@ -454,6 +454,7 @@ const ROWS: &[Row] = &[
         "Instala o plugin nas definições do launcher para poder iniciar o OMSI 2.",
     ]),
     ("Aparecer en:", ["Appear at:", "Start bei:", "Start w:", "Začít u:", "Apparaître à :", "Iniciar em:"]),
+    ("Establecer hora de la situación", ["Set time of situation", "Zeit der Situation verwenden", "Ustaw czas sytuacji", "Nastavit čas situace", "Régler l'heure de la situation", "Definir a hora da situação"]),
     ("Crear plantilla de traducción", ["Create translation template", "Übersetzungsvorlage erstellen", "Utwórz szablon tłumaczenia", "Vytvořit šablonu překladu", "Créer un modèle de traduction", "Criar modelo de tradução"]),
     ("Abrir carpeta de idiomas", ["Open languages folder", "Sprachordner öffnen", "Otwórz folder języków", "Otevřít složku jazyků", "Ouvrir le dossier des langues", "Abrir pasta de idiomas"]),
     ("Los idiomas de la carpeta Languages de OMSI aparecen solos; para sus textos del launcher añade un archivo <CÓDIGO>.txt en la carpeta de idiomas.", [
