@@ -276,9 +276,9 @@ fn graphics(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     cv.label(ui, 21.0, 120.0, 250.0, &cv.t("DG_Options_Label15", "Distancia máxima de visibilidad de objetos"));
     c |= cv.slider_f(ui, o, 122.0, 125.0, 150.0, "performance_maxObjDist", "GRAPHICS", (20.0, 5000.0), 3, Some((21.0, 143.0, &|v: f64| format!("{v:.0}"))));
     cv.label(ui, 21.0, 177.0, 260.0, &cv.t("DG_Options_Label19", "Tamaño mínimo de objeto (% tamaño de pantalla)"));
-    percent(cv, ui, o, 122.0, 182.0, "performance_minObjSize", &mut c);
+    percent(cv, ui, o, 122.0, 182.0, "performance_minObjSize", 10.0, &mut c); // OMSI: half way is 5.00 %
     cv.label(ui, 21.0, 232.0, 250.0, &cv.t("DG_Options_Label27", "… para reflexiones"));
-    percent(cv, ui, o, 122.0, 237.0, "performance_minObjSizeRefl", &mut c);
+    percent(cv, ui, o, 122.0, 237.0, "performance_minObjSizeRefl", 50.0, &mut c);
     cv.label(ui, 21.0, 284.0, 160.0, &cv.t("DG_Options_Label1", "Reflexiones en tiempo real"));
     c |= cv.combo(ui, o, 181.0, 274.0, 88.0, "refl", "performance_realreflexions", "GRAPHICS", REFLEXIONS, true);
 
@@ -321,9 +321,9 @@ fn graphics(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
 }
 
 /// A "% of screen size" slider: the file holds a fraction (0.046), OMSI shows 4.60 %.
-fn percent(cv: &Canvas, ui: &mut Ui, o: &mut Options, x: f32, y: f32, key: &str, changed: &mut bool) {
+fn percent(cv: &Canvas, ui: &mut Ui, o: &mut Options, x: f32, y: f32, key: &str, max: f64, changed: &mut bool) {
     let mut v: f64 = o.get(key, 0).and_then(|s| s.parse::<f64>().ok()).unwrap_or(0.0) * 100.0;
-    if cv.put(ui, cv.rect(x, y, 150.0, 20.0), egui::Slider::new(&mut v, 0.0..=50.0).show_value(false)).changed() {
+    if cv.put(ui, cv.rect(x, y, 150.0, 20.0), egui::Slider::new(&mut v, 0.0..=max).show_value(false)).changed() {
         o.set(key, "GRAPHICS", 0, &format!("{:.3}", v / 100.0));
         *changed = true;
     }
