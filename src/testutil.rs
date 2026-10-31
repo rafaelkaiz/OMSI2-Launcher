@@ -32,7 +32,7 @@ mod tests {
     #[test]
     fn code_does_not_rely_on_add_ons_or_on_the_user() {
         let files = sources![
-            "app_icon", "cfg", "chrono", "i18n", "icons", "log", "logo", "main", "olf", "omsi", "options_layout", "options_ui", "paper", "pick", "plugin",
+            "app_icon", "cfg", "chrono", "exepatch", "i18n", "icons", "log", "logo", "main", "olf", "omsi", "options_layout", "options_ui", "paper", "pick", "plugin",
             "presets", "settings", "situations", "theme", "tutorials", "update", "weather"
         ];
         let mut found = vec![];

@@ -2,7 +2,7 @@
 
 **A fast, modern launcher for the vanilla OMSI 2 bus simulator.** Pick the map, driver, date and time, press *Start* and OMSI 2 opens and loads the map for you, with no clicking through the start screen.
 
-> **Version 0.9-rc1** — release candidate 1 (it should be the last step before 0.9) (see the [release notes](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [Español](README.es.md) · [Web page](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Download](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
+> **Version 0.9** (see the [release notes](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [Español](README.es.md) · [Web page](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Download](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
 
 ![The launcher](docs/img/launcher.png)
 
@@ -29,7 +29,7 @@
 
 ## It never touches your OMSI files
 
-The launcher was built around one rule: **the original OMSI 2 files are never modified.** The only things it writes are:
+The launcher was built around one rule: **the original OMSI 2 files are not modified, with one optional exception you choose yourself.** The only things it writes are:
 
 | What | Where | Safety |
 | --- | --- | --- |
@@ -37,6 +37,7 @@ The launcher was built around one rule: **the original OMSI 2 files are never mo
 | `Drivers\*.odr` | OMSI folder | only when you edit, create or delete a driver; a backup is made first |
 | New preset files | `option_presets\` | new files only, existing presets are never overwritten |
 | Two plugin files | `plugins\` | `OMSI2Launcher.opl` and `OMSI2LauncherPlugin.dll`, only when you press *Install plugin* |
+| `Omsi.exe` | OMSI folder | only the optional *4 GB patch* (one header bit), when you press its button; a backup is made first and it can be removed |
 | Its own settings, log and backups | `%APPDATA%\OMSI2-Launcher\` | the 3 newest backups of each file are kept |
 
 Nothing is written while OMSI 2 is running.
@@ -49,7 +50,7 @@ The plugin currently recognises **OMSI 2 version 2.3.004** only.
 
 ## Install
 
-1. Download `OMSI2-Launcher-0.9-rc1-win64.zip` from the [releases page](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) and unzip it anywhere.
+1. Download `OMSI2-Launcher-0.9-win64.zip` from the [releases page](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) and unzip it anywhere.
 2. Run `OMSI2-Launcher.exe`. It finds OMSI 2 by itself (Steam or Aerosoft default folders); if it cannot, it asks where it is.
 3. Open **Launcher settings** and press **Install plugin**.
 4. Choose your map and driver and press **Start**.

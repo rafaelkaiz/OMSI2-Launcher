@@ -2,6 +2,7 @@
 
 mod cfg;
 mod chrono;
+mod exepatch;
 mod app_icon;
 mod i18n;
 mod log;
@@ -117,6 +118,8 @@ struct App {
     restore_view: Arc<AtomicBool>,
     raise_view: Arc<AtomicBool>,
     plugin_ok: bool,
+    /// The 4 GB patch asked for in Settings and waiting for the user's confirmation (`true`: apply, `false`: remove).
+    patch_confirm: Option<bool>,
     plugin_checked: Instant,
     update: update::Shared,
     locate_dir: String,
@@ -240,6 +243,7 @@ impl App {
             restore_view: Arc::new(AtomicBool::new(false)),
             raise_view: Arc::new(AtomicBool::new(false)),
             plugin_ok: false,
+            patch_confirm: None,
             plugin_checked: Instant::now() - Duration::from_secs(10),
             update: std::sync::Arc::new(std::sync::Mutex::new(update::State::Idle)),
             locate_dir: String::new(),
@@ -689,6 +693,46 @@ impl App {
                         }
                     });
                     ui.label(RichText::new(tr("(la carpeta nueva se usa al reiniciar el launcher)")).italics().size(12.0));
+                    ui.separator();
+                    // the 4 GB patch: the only change the launcher makes to a file OMSI installs, so it asks first
+                    ui.label(RichText::new(tr("Parche de 4 GB")).strong());
+                    ui.label(RichText::new(tr("Cambia un único bit de la cabecera de Omsi.exe para que OMSI pueda usar hasta 4 GB de memoria en vez de 2 GB. No acelera nada; evita cierres por falta de memoria. Antes se guarda una copia de Omsi.exe en la carpeta de copias. Steam puede deshacerlo al actualizar o verificar los archivos.")).italics().size(12.0));
+                    let state = self.omsi.as_deref().and_then(exepatch::status);
+                    ui.label(match state {
+                        Some(true) => tr("Omsi.exe: parche de 4 GB activado."),
+                        Some(false) => tr("Omsi.exe: parche de 4 GB desactivado."),
+                        None => tr("Omsi.exe: no se pudo leer."),
+                    });
+                    if let (Some(on), Some(target)) = (state, self.patch_confirm) {
+                        if on == target {
+                            self.patch_confirm = None;
+                        } else {
+                            ui.label(RichText::new(tr("¿Modificar Omsi.exe ahora? Se guarda una copia antes.")).strong());
+                            ui.horizontal(|ui| {
+                                if ui.add_enabled(!self.running.1, egui::Button::new(tr("Confirmar"))).clicked() {
+                                    if let Some(o) = self.omsi.as_deref() {
+                                        plugin_msg = Some(match exepatch::apply(o, target) {
+                                            Ok(_) if target => tr("Parche de 4 GB aplicado a Omsi.exe (copia en la carpeta de copias).").to_string(),
+                                            Ok(_) => tr("Parche de 4 GB quitado de Omsi.exe (copia en la carpeta de copias).").to_string(),
+                                            Err(e) => e,
+                                        });
+                                    }
+                                    self.patch_confirm = None;
+                                }
+                                if ui.button(tr("Cancelar")).clicked() {
+                                    self.patch_confirm = None;
+                                }
+                            });
+                        }
+                    } else if let Some(on) = state {
+                        let idle = !self.running.1;
+                        if ui.add_enabled(idle, egui::Button::new(if on { tr("Quitar parche de 4 GB") } else { tr("Aplicar parche de 4 GB") })).clicked() {
+                            self.patch_confirm = Some(!on);
+                        }
+                        if !idle {
+                            ui.label(RichText::new(tr("Cierra OMSI para modificar Omsi.exe.")).italics().size(12.0));
+                        }
+                    }
                 });
                 card(ui, tr("Inicio directo (plugin)"), self.settings_tab == 2, &mut |ui| {
                     ui.label(RichText::new(tr("Añade dos archivos nuevos a la carpeta plugins de OMSI (OMSI2Launcher.opl y OMSI2LauncherPlugin.dll) y no modifica ninguno existente. Con él, ¡Iniciar! se pulsa dentro de OMSI en vez de hacer clic con el ratón. Funciona la próxima vez que abras OMSI.")).italics().size(12.0));

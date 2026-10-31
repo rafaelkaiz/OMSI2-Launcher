@@ -2,7 +2,7 @@
 
 **Un launcher rápido y moderno para el simulador de autobuses OMSI 2 original.** Elige el mapa, el conductor, la fecha y la hora, pulsa *Iniciar* y OMSI 2 se abre y carga el mapa por ti, sin pasar a mano por la pantalla de inicio.
 
-> **Versión 0.9-rc1** — primera versión candidata (debería ser el último paso antes de la 0.9) (mira las [notas de la versión](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [English](README.md) · [Página web](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Descargar](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
+> **Versión 0.9** (mira las [notas de la versión](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [English](README.md) · [Página web](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Descargar](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
 
 ![El launcher](docs/img/launcher.png)
 
@@ -29,7 +29,7 @@
 
 ## No toca tus archivos de OMSI
 
-El launcher se hizo con una regla: **los archivos originales de OMSI 2 nunca se modifican.** Lo único que escribe es:
+El launcher se hizo con una regla: **los archivos originales de OMSI 2 no se modifican, salvo una excepción opcional que eliges tú.** Lo único que escribe es:
 
 | Qué | Dónde | Seguridad |
 | --- | --- | --- |
@@ -37,6 +37,7 @@ El launcher se hizo con una regla: **los archivos originales de OMSI 2 nunca se 
 | `Drivers\*.odr` | carpeta de OMSI | solo al editar, crear o eliminar un conductor; antes se hace una copia de seguridad |
 | Archivos de preset nuevos | `option_presets\` | solo archivos nuevos, nunca sobrescribe presets existentes |
 | Dos archivos del plugin | `plugins\` | `OMSI2Launcher.opl` y `OMSI2LauncherPlugin.dll`, solo al pulsar *Instalar plugin* |
+| `Omsi.exe` | carpeta de OMSI | solo el *parche de 4 GB* opcional (un bit de la cabecera), al pulsar su botón; antes se hace una copia de seguridad y se puede quitar |
 | Sus ajustes, registro y copias | `%APPDATA%\OMSI2-Launcher\` | se conservan las 3 copias más recientes de cada archivo |
 
 No escribe nada mientras OMSI 2 está en ejecución.
@@ -49,7 +50,7 @@ Por ahora el plugin solo reconoce **OMSI 2 versión 2.3.004**.
 
 ## Instalación
 
-1. Descarga `OMSI2-Launcher-0.9-rc1-win64.zip` de la [página de versiones](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) y descomprímelo donde quieras.
+1. Descarga `OMSI2-Launcher-0.9-win64.zip` de la [página de versiones](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) y descomprímelo donde quieras.
 2. Ejecuta `OMSI2-Launcher.exe`. Encuentra OMSI 2 solo (carpetas habituales de Steam o Aerosoft); si no puede, te pregunta dónde está.
 3. Abre **Ajustes del launcher** y pulsa **Instalar plugin**.
 4. Elige mapa y conductor y pulsa **Iniciar**.
