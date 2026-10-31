@@ -260,6 +260,15 @@ impl App {
         }
     }
 
+    /// The saved situation that counts: the one picked in the list, but only while it is one the list shows. With "only the selected
+    /// map's situations" on, a situation of another map (kept from before the map was changed) does not count, so a map without
+    /// situations has none selected.
+    fn selected_situation(&self) -> Option<&situations::Situation> {
+        let s = self.sit_sel.and_then(|i| self.situations.get(i))?;
+        let folder = self.maps.get(self.map).map(|m| m.folder.as_str()).unwrap_or_default();
+        (!self.sit_only_map || s.map_folder.eq_ignore_ascii_case(folder)).then_some(s)
+    }
+
     fn set_status(&self, s: &str) {
         *self.status.lock().unwrap() = s.into();
     }
@@ -304,7 +313,7 @@ impl App {
             (TimeMode::Custom, false) => omsi::TimeChoice::TimeOnly(self.clock.0, self.clock.1, self.sec),
             _ => omsi::TimeChoice::Situation,
         };
-        let situation = self.sit_sel.and_then(|i| self.situations.get(i)).map(|s| (s.name.clone(), s.occurrence));
+        let situation = self.selected_situation().map(|s| (s.name.clone(), s.occurrence));
         let spawn = (mode == LoadMode::NoBuses).then(|| self.spawn_points.get(self.spawn_sel).cloned()).flatten();
         let (restore_flag, raise_flag) = (self.restore_view.clone(), self.raise_view.clone());
         let (close_flag, close_on, minimize_flag) = (self.close_requested.clone(), self.settings.close_on_start, self.minimize_requested.clone());
@@ -938,13 +947,14 @@ impl App {
 
     /// The date and time the start screen shows: the chosen ones, or those of the situation (the selected saved one, else the map's last).
     fn shown_date_time(&self) -> (Option<chrono::Date>, Option<(u32, u32, u32)>) {
-        let situation = self.sit_sel.and_then(|i| self.situations.get(i)).filter(|_| self.mode == LoadMode::SavedSituation);
+        let situation = self.selected_situation().filter(|_| self.mode == LoadMode::SavedSituation);
         let saved = match (&self.omsi, self.maps.get(self.map)) {
             (Some(o), Some(m)) => chrono::situation_datetime(&o.join("maps").join(&m.folder).join("laststn.osn")),
             _ => None,
         };
         let (sit_date, sit_time) = match situation {
             Some(s) => (s.date, s.time),
+            None if self.mode == LoadMode::SavedSituation => (None, None),
             None => (saved.map(|x| x.0), saved.map(|x| x.1)),
         };
         match self.time_mode {
@@ -973,11 +983,12 @@ impl App {
     fn chrono_text(&mut self) -> String {
         let (Some(omsi), Some(map)) = (self.omsi.as_ref(), self.maps.get(self.map)) else { return String::new() };
         let map_dir = omsi.join("maps").join(&map.folder);
-        let situation = self.sit_sel.and_then(|i| self.situations.get(i)).filter(|_| self.mode == LoadMode::SavedSituation);
+        let situation = self.selected_situation().filter(|_| self.mode == LoadMode::SavedSituation);
         let saved = || chrono::situation_date(&map_dir.join("laststn.osn"));
         let date = match (self.time_mode, self.date_touched, situation) {
             (TimeMode::Custom, true, _) => Some((self.date.2 as i64, self.date.1, self.date.0)),
             (_, _, Some(s)) => s.date.or_else(saved),
+            _ if self.mode == LoadMode::SavedSituation => None,
             _ => saved(),
         };
         let Some(date) = date else { return String::new() };
@@ -1111,7 +1122,7 @@ impl eframe::App for App {
         }
         ctx.request_repaint_after(Duration::from_secs(1));
         let can_start = !busy && self.omsi.is_some() && !self.maps.is_empty() && self.plugin_ok;
-        let can_go = can_start && (self.mode != LoadMode::SavedSituation || self.sit_sel.is_some());
+        let can_go = can_start && (self.mode != LoadMode::SavedSituation || self.selected_situation().is_some());
 
         if ctx.input(|i| i.key_pressed(egui::Key::F11)) {
             self.settings.fullscreen = !self.settings.fullscreen;
@@ -1319,7 +1330,7 @@ impl eframe::App for App {
                     }
                 });
                 let (heading, body) = if self.mode == LoadMode::SavedSituation {
-                    let text = match self.sit_sel.and_then(|i| self.situations.get(i)) {
+                    let text = match self.selected_situation() {
                         Some(s) => s.description.clone(),
                         None => tr("¡No hay situación seleccionada!").to_string(),
                     };
