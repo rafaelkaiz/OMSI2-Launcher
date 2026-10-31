@@ -15,8 +15,8 @@ pub struct Settings {
     pub always_on_top: bool,
     /// Open the launcher full screen, with the interface centred like OMSI's own start screen (F11 toggles).
     pub fullscreen: bool,
-    /// Delete the "nocheck" file OMSI leaves in its folder after a bad shutdown, when the launcher opens and before starting OMSI.
-    pub remove_nocheck: bool,
+    /// Delete the "closecheck" file OMSI leaves in its folder after a bad shutdown, when the launcher opens and before starting OMSI.
+    pub remove_closecheck: bool,
 }
 
 fn file() -> PathBuf {
@@ -46,7 +46,7 @@ fn lang_from_locale(name: &str) -> Lang {
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { theme: Theme::Light, omsi_dir: None, windowed: false, lang: Lang::Es, close_on_start: true, always_on_top: true, fullscreen: true, remove_nocheck: true }
+        Self { theme: Theme::Light, omsi_dir: None, windowed: false, lang: Lang::Es, close_on_start: true, always_on_top: true, fullscreen: true, remove_closecheck: true }
     }
 }
 
@@ -70,7 +70,7 @@ impl Settings {
                 "close_on_start" => s.close_on_start = v != "0",
                 "always_on_top" => s.always_on_top = v != "0",
                 "fullscreen" => s.fullscreen = v != "0",
-                "remove_nocheck" => s.remove_nocheck = v != "0",
+                "remove_closecheck" | "remove_nocheck" => s.remove_closecheck = v != "0", // the old name of the key is still read
                 _ => {}
             }
         }
@@ -83,7 +83,7 @@ impl Settings {
             std::fs::create_dir_all(dir).map_err(|e| trf("No se pudo crear la carpeta de ajustes: {}", &[&e.to_string()]))?;
         }
         let text = format!(
-            "theme={}\nlanguage={}\nomsi_dir={}\nwindowed={}\nclose_on_start={}\nalways_on_top={}\nfullscreen={}\nremove_nocheck={}\n",
+            "theme={}\nlanguage={}\nomsi_dir={}\nwindowed={}\nclose_on_start={}\nalways_on_top={}\nfullscreen={}\nremove_closecheck={}\n",
             self.theme.key(),
             self.lang.code(),
             self.omsi_dir.as_ref().map(|p| p.display().to_string()).unwrap_or_default(),
@@ -91,7 +91,7 @@ impl Settings {
             u8::from(self.close_on_start),
             u8::from(self.always_on_top),
             u8::from(self.fullscreen),
-            u8::from(self.remove_nocheck),
+            u8::from(self.remove_closecheck),
         );
         std::fs::write(path, text).map_err(|e| trf("No se pudieron guardar los ajustes: {}", &[&e.to_string()]))
     }

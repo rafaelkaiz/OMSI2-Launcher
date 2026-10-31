@@ -189,7 +189,7 @@ impl Canvas<'_> {
     }
 }
 
-const LANGUAGES: Choices = &[("ESP", "ESP"), ("ENG", "ENG"), ("DEU", "DEU"), ("FRA", "FRA"), ("HUN", "HUN"), ("POL", "POL"), ("SRB", "SRB")];
+const LANGUAGES: Choices = &[("DEU", "DEU"), ("ENG", "ENG"), ("ESP", "ESP"), ("FRA", "FRA"), ("HUN", "HUN"), ("POL", "POL"), ("RUH", "RUH"), ("SRB", "SRB")];
 const TICKETS: Choices = &[("0", "Ninguno"), ("1", "Fácil"), ("2", "Avanzado")];
 const REFLEXIONS: Choices = &[("none", "Ninguno"), ("economy", "Económico"), ("full", "Completo")];
 const WEAR: Choices = &[
@@ -367,8 +367,8 @@ fn graphics_advanced(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     c |= cv.number(ui, o, 478.0, 196.0, 70.0, "texmemlimit", "GRAPHICS", 0, 1);
     cv.label(ui, 556.0, 207.0, 24.0, "MB");
     cv.label(ui, 215.0, 247.0, 355.0, &cv.t("DG_Options_Label28", "Tamaño de textura de reflexiones en tiempo real"));
-    let mut size: i64 = o.get("performance_reflTexSize", 0).and_then(|s| s.parse().ok()).unwrap_or(8).clamp(6, 11);
-    if cv.put(ui, cv.rect(290.0, 257.0, 148.0, 20.0), egui::Slider::new(&mut size, 6..=11).show_value(false)).changed() {
+    let mut size: i64 = o.get("performance_reflTexSize", 0).and_then(|s| s.parse().ok()).unwrap_or(8).clamp(6, 13);
+    if cv.put(ui, cv.rect(290.0, 257.0, 148.0, 20.0), egui::Slider::new(&mut size, 6..=12).show_value(false)).changed() {
         o.set("performance_reflTexSize", "GRAPHICS", 0, &size.to_string());
         c = true;
     }

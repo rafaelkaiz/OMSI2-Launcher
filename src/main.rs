@@ -10,6 +10,7 @@ mod olf;
 mod omsi;
 mod options_layout;
 mod options_ui;
+mod paper;
 mod pick;
 mod plugin;
 mod presets;
@@ -111,6 +112,7 @@ struct App {
     confirm_delete: Option<usize>,
     situations: Vec<situations::Situation>,
     sit_sel: Option<usize>,
+    staff_page: u8,
     spawn_sel: usize,
     spawn_points: Vec<String>,
     spawn_map: Option<usize>,
@@ -178,8 +180,8 @@ impl App {
             }
         });
         let omsi = omsi::find_omsi_dir(settings.omsi_dir.clone()).filter(|_| std::env::var("OMSI2_OPEN").as_deref() != Ok("missing")); // dev: OMSI2_OPEN=missing shows the "where is OMSI" screen
-        if let (Some(d), true) = (&omsi, settings.remove_nocheck) {
-            omsi::remove_nocheck(d);
+        if let (Some(d), true) = (&omsi, settings.remove_closecheck) {
+            omsi::remove_closecheck(d);
         }
         let (maps, drivers, options) = match &omsi {
             Some(d) => (omsi::list_maps(d), cfg::list_drivers(d), cfg::Options::load(d)),
@@ -222,13 +224,14 @@ impl App {
             tut_open: false,
             tut_sel: 0,
             tut_entries: vec![],
-            staff_open: false,
+            staff_open: std::env::var("OMSI2_OPEN").as_deref() == Ok("staff"), // dev shortcut for screenshots (OMSI2_TAB = page)
             staff_sel: 0,
             staff_rec: None,
             staff_labels: Arc::new(HashMap::new()),
             confirm_delete: None,
             situations: sit_list,
             sit_sel: None,
+            staff_page: if std::env::var("OMSI2_OPEN").as_deref() == Ok("staff") { std::env::var("OMSI2_TAB").ok().and_then(|t| t.parse().ok()).unwrap_or(0).min(1) } else { 0 },
             spawn_sel: 0,
             spawn_points: Vec::new(),
             spawn_map: None,
@@ -293,8 +296,8 @@ impl App {
         let (restore_flag, raise_flag) = (self.restore_view.clone(), self.raise_view.clone());
         let (close_flag, close_on, minimize_flag) = (self.close_requested.clone(), self.settings.close_on_start, self.minimize_requested.clone());
         self.load_started = Some(Instant::now());
-        if self.settings.remove_nocheck {
-            omsi::remove_nocheck(&dir);
+        if self.settings.remove_closecheck {
+            omsi::remove_closecheck(&dir);
         }
         // The loading screen stays full screen, but not topmost: OMSI creates its own Direct3D device while it starts, and a
         // window forced above everything may be what made that fail with D3DERR_DEVICELOST.
@@ -337,13 +340,16 @@ impl App {
         if self.staff_rec.as_ref().map(|(p, _)| p) != Some(&path) {
             self.staff_rec = cfg::read_record(&path).map(|r| (path.clone(), r));
         }
+        if self.staff_labels.is_empty() {
+            self.staff_labels = Arc::new(self.omsi.as_deref().map(|d| olf::load(d, self.settings.lang)).unwrap_or_default());
+        }
         let labels = self.staff_labels.clone();
         let l = |k: &str| labels.get(k).cloned().unwrap_or_else(|| k.to_string());
-        let red = Color32::from_rgb(190, 0, 0);
         let mut open = true;
+        let mut close_staff = false;
         let names: Vec<String> = self.drivers.iter().map(|d| d.name.clone()).collect();
         let title = if labels.contains_key("DG_Driver") { l("DG_Driver") } else { tr("Expediente del personal").to_string() };
-        egui::Window::new(title).id(egui::Id::unique("win-staff")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).open(&mut open).collapsible(false).default_size([520.0, 700.0]).show(ctx, |ui| {
+        egui::Window::new(title).id(egui::Id::unique("win-staff")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.label(l("DG_Driver_Label1"));
                 pick::pick(ui, "staff-driver", 220.0, &names, &mut self.staff_sel);
@@ -368,62 +374,93 @@ impl App {
                 ui.label(RichText::new(tr("Cierra OMSI 2 para editar conductores.")).italics());
             }
             ui.separator();
-            let d = &self.drivers[self.staff_sel];
+            let d = self.drivers[self.staff_sel].clone();
             let date = |s: &str| if s.len() == 8 { format!("{}/{}/{}", &s[6..8], &s[4..6], &s[0..4]) } else { s.to_string() };
-            egui::ScrollArea::vertical().show(ui, |ui| {
-                egui::Frame::new().fill(pal().field).inner_margin(12.0).show(ui, |ui| {
-                    ui.set_width(ui.available_width());
-                    ui.vertical_centered(|ui| {
-                        ui.label(RichText::new(l("DG_Driver")).size(26.0).strong());
-                    });
-                    ui.add_space(8.0);
-                    let photo = d.path.with_extension("bmp");
-                    let photo = if photo.is_file() { Some(photo) } else { self.omsi.as_ref().map(|o| o.join("Drivers").join("nopic.bmp")) };
-                    if let Some(p) = photo.filter(|p| p.is_file()) {
-                        let uri = format!("file:///{}", p.display().to_string().replace('\\', "/"));
-                        ui.add(egui::Image::new(uri).fit_to_exact_size(egui::vec2(120.0, 160.0)));
+            // the sheet is smaller when the screen is short
+            let k = ((ctx.content_rect().height() - 215.0) / paper::HEIGHT).clamp(0.55, 1.0);
+            let photo = d.path.with_extension("bmp");
+            let photo = if photo.is_file() { Some(photo) } else { self.omsi.as_ref().map(|o| o.join("Drivers").join("nopic.bmp")) };
+            let (page, _) = ui.allocate_exact_size(egui::vec2(paper::WIDTH * k, paper::HEIGHT * k), egui::Sense::hover());
+            let p = ui.painter_at(page);
+            paper::paint(&p, page, k);
+            let at = |x: f32, y: f32| page.left_top() + egui::vec2(x * k, y * k);
+            let ink = Color32::from_rgb(18, 18, 18);
+            let mono = egui::FontId::monospace(13.0 * k);
+            // the paper's lettering is heavy: each text is drawn twice, a hair apart
+            let bold = |pos: egui::Pos2, anchor: egui::Align2, text: &str, font: &egui::FontId, color: Color32| {
+                p.text(pos, anchor, text, font.clone(), color);
+                p.text(pos + egui::vec2(0.8 * k, 0.0), anchor, text, font.clone(), color);
+            };
+            let title_text = l("DG_Driver");
+            let title_size = (30.0 * k).min(270.0 * k / (title_text.chars().count() as f32 * 0.5).max(1.0));
+            bold(at(185.0, 30.0), egui::Align2::CENTER_CENTER, &title_text, &egui::FontId::proportional(title_size), ink);
+            bold(at(350.0, 21.0), egui::Align2::LEFT_CENTER, &trf("Página {}", &[&(self.staff_page + 1).to_string()]), &egui::FontId::proportional(14.0 * k), ink);
+            if let Some((_, r)) = &self.staff_rec {
+                if self.staff_page == 0 {
+                    if let Some(img) = photo.filter(|f| f.is_file()) {
+                        let uri = format!("file:///{}", img.display().to_string().replace('\\', "/"));
+                        let rect = egui::Rect::from_min_size(at(59.0, 73.0), egui::vec2(120.0 * k, 160.0 * k));
+                        egui::Image::new(uri).fit_to_exact_size(rect.size()).paint_at(ui, rect);
+                        p.rect_stroke(rect, 0.0, egui::Stroke::new(1.0, Color32::from_rgb(60, 55, 45)), egui::StrokeKind::Outside);
                     }
-                    ui.add_space(8.0);
-                    let Some((_, r)) = &self.staff_rec else { return };
-                    ui.label(RichText::new(if d.female { l("DG_Driver_Mrs") } else { l("DG_Driver_Mr") }).monospace());
-                    egui::Grid::new("staff-grid").num_columns(2).spacing([24.0, 6.0]).show(ui, |ui| {
-                        let row = |ui: &mut egui::Ui, k: &str, v: String, bad: bool| {
-                            ui.label(l(k));
-                            let t = RichText::new(v).monospace().strong();
-                            ui.label(if bad { t.color(red) } else { t });
-                            ui.end_row();
-                        };
-                        row(ui, "DG_Driver_Name", d.name.clone(), false);
-                        row(ui, "DG_Driver_Birthday", date(&d.birth), false);
-                        row(ui, "DG_Driver_DateOfHire", date(&r.hired), false);
-                        row(ui, "DG_Driver_Range", format!("{:.1} km", r.hektometers as f64 / 10.0), false);
-                        row(ui, "DG_Driver_Busstops", r.stops.to_string(), false);
-                        row(ui, "DG_Driver_Busstops_Early", r.early.to_string(), true);
-                        row(ui, "DG_Driver_Busstops_Late", r.late.to_string(), true);
-                        row(ui, "DG_Driver_Tickets", r.tickets_sold.to_string(), false);
-                        row(ui, "DG_Driver_Cash", format!("{:.2}", r.cash), false);
-                        row(ui, "DG_Driver_Crashs", r.crashes[0].to_string(), true);
-                        row(ui, "DG_Driver_HitAndRun", r.crashes[1].to_string(), true);
-                        row(ui, "DG_Driver_HitAndRun_Heavy", r.crashes[2].to_string(), true);
-                        row(ui, "DG_Driver_PedCrashs", r.crashes[3].to_string(), true);
-                        let driving = r.driving().map(|p| format!("{p:.1} % ({})", l("DG_Driver_Rating_Driving_0"))).unwrap_or_else(|| "-".into());
-                        row(ui, "DG_Driver_Rating_Driving", driving, false);
-                        let ticket = "-".to_string(); // OMSI's ticket-selling rating formula is not known here
-                        row(ui, "DG_Driver_Rating_Ticket", ticket, false);
-                        let comfort = r.comfort().map(|(p, got, max)| format!("{p:.1} % ({got}/{max})")).unwrap_or_else(|| "-".into());
-                        row(ui, "DG_Driver_Rating_Comfort", comfort, false);
-                    });
-                    if !r.buses.is_empty() {
-                        ui.add_space(8.0);
-                        ui.label(RichText::new(l("DG_Driver_Buses")).strong());
-                        for (bus, n) in &r.buses {
-                            ui.label(RichText::new(format!("{n} ×  {bus}")).monospace());
+                    bold(at(270.0, 256.0), egui::Align2::LEFT_CENTER, &if d.female { l("DG_Driver_Mrs") } else { l("DG_Driver_Mr") }, &mono, ink);
+                    let driving = r.driving().map(|v| format!("{v:.1} % ({})", l("DG_Driver_Rating_Driving_0"))).unwrap_or_else(|| "-".into());
+                    let comfort = r.comfort().map(|(v, got, max)| format!("{v:.1} % ({got}/{max})")).unwrap_or_else(|| "-".into());
+                    // (height on the sheet, OMSI's label, value, shown in red)
+                    let rows: [(f32, &str, String, bool); 16] = [
+                        (276.0, "DG_Driver_Name", d.name.clone(), false),
+                        (296.0, "DG_Driver_Birthday", date(&d.birth), false),
+                        (316.0, "DG_Driver_DateOfHire", date(&r.hired), false),
+                        (356.0, "DG_Driver_Range", format!("{:.1} km", r.hektometers as f64 / 10.0), false),
+                        (376.0, "DG_Driver_Busstops", r.stops.to_string(), false),
+                        (396.0, "DG_Driver_Busstops_Early", r.early.to_string(), true),
+                        (416.0, "DG_Driver_Busstops_Late", r.late.to_string(), true),
+                        (456.0, "DG_Driver_Tickets", r.tickets_sold.to_string(), false),
+                        (476.0, "DG_Driver_Cash", format!("{:.2}", r.cash), false),
+                        (516.0, "DG_Driver_Crashs", r.crashes[0].to_string(), true),
+                        (536.0, "DG_Driver_HitAndRun", r.crashes[1].to_string(), true),
+                        (556.0, "DG_Driver_HitAndRun_Heavy", r.crashes[2].to_string(), true),
+                        (576.0, "DG_Driver_PedCrashs", r.crashes[3].to_string(), true),
+                        (616.0, "DG_Driver_Rating_Driving", driving, false),
+                        (636.0, "DG_Driver_Rating_Ticket", "-".to_string(), false), // OMSI's ticket-selling rating formula is not known here
+                        (656.0, "DG_Driver_Rating_Comfort", comfort, false),
+                    ];
+                    for (y, key, value, bad) in rows {
+                        // long labels (some languages) are shrunk so they stop before the values
+                        let label = l(key);
+                        let fit = (170.0 * k / (label.chars().count() as f32 * 6.4 * k)).min(1.0);
+                        p.text(at(74.0, y), egui::Align2::LEFT_CENTER, &label, egui::FontId::proportional(13.5 * k * fit), ink);
+                        bold(at(269.0, y), egui::Align2::LEFT_CENTER, &value, &mono, if bad { Color32::from_rgb(205, 0, 0) } else { ink });
+                        p.line_segment([at(249.0, y + 9.0), at(438.0, y + 9.0)], egui::Stroke::new(1.0, Color32::from_rgb(70, 64, 52)));
+                    }
+                } else {
+                    bold(at(84.0, 71.0), egui::Align2::LEFT_CENTER, &l("DG_Driver_Buses"), &egui::FontId::proportional(14.5 * k), ink);
+                    // name, dots up to a fixed column, then the distance driven with that bus
+                    for (i, (bus, hm)) in r.buses.iter().take(22).enumerate() {
+                        let mut name: String = bus.chars().take(32).collect();
+                        if bus.chars().count() > 32 {
+                            name.push_str("..");
                         }
+                        let line = format!("{name:.<34} {:.1} km", *hm as f64 / 10.0);
+                        bold(at(78.0, 127.0 + i as f32 * 25.0), egui::Align2::LEFT_CENTER, &line, &mono, ink);
+                    }
+                }
+            }
+            ui.add_space(4.0);
+            ui.horizontal(|ui| {
+                for n in 0..2u8 {
+                    if ui.selectable_label(self.staff_page == n, trf("Página {}", &[&(n + 1).to_string()])).clicked() {
+                        self.staff_page = n;
+                    }
+                }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button(tr("Cerrar")).clicked() {
+                        close_staff = true;
                     }
                 });
             });
         });
-        if !open {
+        if !open || close_staff {
             self.staff_open = false;
         }
         self.confirm_window(ctx);
@@ -607,7 +644,7 @@ impl App {
                 card(ui, "OMSI 2", self.settings_tab == 1, &mut |ui| {
                     changed |= ui.checkbox(&mut self.settings.windowed, tr("Abrir OMSI en modo ventana")).changed();
                     changed |= ui.checkbox(&mut self.settings.close_on_start, tr("Cerrar el launcher al iniciar OMSI")).changed();
-                    changed |= ui.checkbox(&mut self.settings.remove_nocheck, tr("Eliminar el archivo \"nocheck\" cuando OMSI 2 falle")).changed();
+                    changed |= ui.checkbox(&mut self.settings.remove_closecheck, tr("Eliminar el archivo \"closecheck\" cuando OMSI 2 falle")).changed();
                     ui.add_space(4.0);
                     let folder = self.omsi.as_ref().map(|p| p.display().to_string()).unwrap_or_else(|| tr("no encontrada").into());
                     ui.label(trf("Carpeta: {}", &[&folder]));

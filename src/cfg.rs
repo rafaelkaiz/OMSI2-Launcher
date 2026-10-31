@@ -323,7 +323,7 @@ pub struct Record {
     pub tickets_sold: u64,
     pub cash: f64,
     pub rating: [i64; 5],
-    /// (bus, times driven)
+    /// (bus, hectometres driven with it: 65 is 6.5 km)
     pub buses: Vec<(String, u64)>,
 }
 
@@ -448,7 +448,9 @@ mod tests {
         std::fs::write(d.join("options.cfg"), &orig).unwrap();
         unsafe { std::env::set_var("APPDATA", d.join("appdata")) };
         let mut o = Options::load(&d).unwrap();
-        assert_eq!(o.get("maxFPS", 0).as_deref(), Some("60"));
+        // the values of the user's real file change whenever they use OMSI's options, so the originals are read, not assumed
+        let (fps, tex0, tex1) = (o.get("maxFPS", 0).unwrap_or_default(), o.get("texFilter", 0).unwrap_or_default(), o.get("texFilter", 1).unwrap_or_default());
+        assert!(!fps.is_empty());
         o.set("maxFPS", "GRAPHICS", 0, "120");
         o.set("texFilter", "GRAPHICS", 1, "8");
         o.set_flag("newflag1", "GRAPHICS", true);
@@ -457,14 +459,14 @@ mod tests {
         o.save().unwrap();
         let o2 = Options::load(&d).unwrap();
         assert_eq!(o2.get("maxFPS", 0).as_deref(), Some("120"));
-        assert_eq!(o2.get("texFilter", 0).as_deref(), Some("3"));
+        assert_eq!(o2.get("texFilter", 0).as_deref(), Some(tex0.as_str()));
         assert_eq!(o2.get("texFilter", 1).as_deref(), Some("8"));
         assert!(o2.has("newflag1") && o2.has("newflag2") && o2.has("sunglow"));
         assert_eq!(o2.get("brand_new_key", 0).as_deref(), Some("7"));
         // turning flags back off and values back restores the original bytes
         let mut o3 = Options::load(&d).unwrap();
-        o3.set("maxFPS", "GRAPHICS", 0, "60");
-        o3.set("texFilter", "GRAPHICS", 1, "16");
+        o3.set("maxFPS", "GRAPHICS", 0, &fps);
+        o3.set("texFilter", "GRAPHICS", 1, &tex1);
         o3.set_flag("newflag1", "GRAPHICS", false);
         o3.set_flag("newflag2", "GENERAL", false);
         o3.set_flag("brand_new_key", "GRAPHICS", false);

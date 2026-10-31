@@ -175,18 +175,18 @@ fn select_in_combo(form: HWND, combo: HWND, index: usize) {
     }
 }
 
-/// OMSI leaves a file called "nocheck" in its folder when it is closed badly; it is removed so the next start is normal.
+/// OMSI leaves a file called "closecheck" in its folder when it is closed badly; it is removed so the next start is normal.
 /// Never touched while OMSI is running.
-pub fn remove_nocheck(omsi: &Path) {
+pub fn remove_closecheck(omsi: &Path) {
     if omsi_running() {
         return;
     }
     let Ok(entries) = std::fs::read_dir(omsi) else { return };
     for e in entries.flatten() {
-        if e.file_name().to_string_lossy().eq_ignore_ascii_case("nocheck") && e.path().is_file() {
+        if e.file_name().to_string_lossy().eq_ignore_ascii_case("closecheck") && e.path().is_file() {
             match std::fs::remove_file(e.path()) {
-                Ok(()) => crate::log::line("nocheck eliminado"),
-                Err(err) => crate::log::line(&format!("no se pudo eliminar nocheck: {err}")),
+                Ok(()) => crate::log::line("closecheck eliminado"),
+                Err(err) => crate::log::line(&format!("no se pudo eliminar closecheck: {err}")),
             }
         }
     }

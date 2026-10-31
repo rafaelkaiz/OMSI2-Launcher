@@ -267,13 +267,13 @@ const ROWS: &[Row] = &[
         "Essa pasta não contém o Omsi.exe.",
     ]),
     ("Elige la carpeta de OMSI 2", ["Choose the OMSI 2 folder", "OMSI-2-Ordner wählen", "Wybierz folder OMSI 2", "Vyberte složku OMSI 2", "Choisir le dossier d'OMSI 2", "Escolher a pasta do OMSI 2"]),
-    ("Eliminar el archivo \"nocheck\" cuando OMSI 2 falle", [
-        "Delete the \"nocheck\" file when OMSI 2 crashes",
-        "Die Datei \"nocheck\" löschen, wenn OMSI 2 abstürzt",
-        "Usuń plik \"nocheck\" po awarii OMSI 2",
-        "Smazat soubor \"nocheck\" po pádu OMSI 2",
-        "Supprimer le fichier \"nocheck\" quand OMSI 2 plante",
-        "Eliminar o ficheiro \"nocheck\" quando o OMSI 2 falhar",
+    ("Eliminar el archivo \"closecheck\" cuando OMSI 2 falle", [
+        "Delete the \"closecheck\" file when OMSI 2 crashes",
+        "Die Datei \"closecheck\" löschen, wenn OMSI 2 abstürzt",
+        "Usuń plik \"closecheck\" po awarii OMSI 2",
+        "Smazat soubor \"closecheck\" po pádu OMSI 2",
+        "Supprimer le fichier \"closecheck\" quand OMSI 2 plante",
+        "Eliminar o ficheiro \"closecheck\" quando o OMSI 2 falhar",
     ]),
     ("Instala el plugin en Ajustes del launcher para poder iniciar OMSI 2.", [
         "Install the plugin in the launcher settings to be able to start OMSI 2.",
@@ -284,6 +284,7 @@ const ROWS: &[Row] = &[
         "Instala o plugin nas definições do launcher para poder iniciar o OMSI 2.",
     ]),
     ("Aparecer en:", ["Appear at:", "Start bei:", "Start w:", "Začít u:", "Apparaître à :", "Iniciar em:"]),
+    ("Página {}", ["Page {}", "Seite {}", "Strona {}", "Strana {}", "Page {}", "Página {}"]),
     ("Esperando la ventana de posición inicial de OMSI...", [
         "Waiting for OMSI's start position window...",
         "Warte auf das Startpositionsfenster von OMSI...",

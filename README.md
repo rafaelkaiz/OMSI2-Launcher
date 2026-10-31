@@ -16,7 +16,7 @@
 - **Drivers**: edit, create and delete drivers, and see the staff file (stops, distance, comfort rating, buses driven).
 - **Looks like OMSI**: the original orange design, plus a dark and a light theme. Opens full screen with a loading screen that stays up until OMSI is loading the map (F11 toggles full screen).
 - **7 languages**: Español, English, Deutsch, Polski, Čeština, Français, Português. The first run picks your Windows language.
-- **Removes the `nocheck` file** OMSI leaves behind after a crash (optional).
+- **Removes the `closecheck` file** OMSI leaves behind after a crash (optional).
 - **Checks GitHub for new versions** (it only tells you; it never downloads or replaces anything by itself).
 
 ![Options](docs/img/options.png)

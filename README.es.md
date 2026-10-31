@@ -16,7 +16,7 @@
 - **Conductores**: edita, crea y elimina conductores, y consulta el expediente del personal (paradas, distancia, valoración de confort, autobuses conducidos).
 - **Aspecto de OMSI**: el diseño naranja original, más un tema oscuro y otro claro. Se abre a pantalla completa con una pantalla de carga que permanece hasta que OMSI está cargando el mapa (F11 alterna la pantalla completa).
 - **7 idiomas**: Español, English, Deutsch, Polski, Čeština, Français, Português. La primera vez elige el idioma de Windows.
-- **Elimina el archivo `nocheck`** que OMSI deja tras un cierre inesperado (opcional).
+- **Elimina el archivo `closecheck`** que OMSI deja tras un cierre inesperado (opcional).
 - **Busca versiones nuevas en GitHub** (solo te avisa; nunca descarga ni reemplaza nada por sí solo).
 
 ![Opciones](docs/img/options.png)
