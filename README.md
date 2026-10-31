@@ -82,7 +82,7 @@ cd ..
 cargo build --release
 ```
 
-Run the tests with `cargo test --release -- --test-threads=1`. The `tools\` folder holds the PowerShell and disassembler helpers used to study OMSI's start screen.
+Run the tests with `cargo test --release -- --test-threads=1`. What each key of OMSI's `options.cfg` means, and what a preset does with it, is in [docs/options.md](docs/options.md). The `tools\` folder holds the PowerShell and disassembler helpers used to study OMSI's start screen.
 
 ## Support the project
 

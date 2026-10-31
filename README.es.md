@@ -67,7 +67,7 @@ Windows 10/11 de 64 bits. El programa no está firmado digitalmente, así que Sm
 
 ## Compilar desde el código
 
-Necesitas [Rust](https://rustup.rs/) (edición 2024) en Windows. Los comandos están en el [README en inglés](README.md#build-from-source).
+Necesitas [Rust](https://rustup.rs/) (edición 2024) en Windows. Los comandos están en el [README en inglés](README.md#build-from-source). Qué significa cada clave del `options.cfg` de OMSI, y qué hace un preset con ella, está en [docs/options.md](docs/options.md) (en inglés).
 
 ## Apoya el proyecto
 
