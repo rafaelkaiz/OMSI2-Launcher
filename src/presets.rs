@@ -117,7 +117,8 @@ mod tests {
     #[test]
     fn preset_sets_everything_it_contains() {
         let omsi = Path::new(r"C:\Program Files (x86)\Steam\steamapps\common\OMSI 2");
-        let Some(p) = list(omsi).into_iter().find(|p| p.to_string_lossy().contains("Addon HafenCity - Best Performance")) else { return };
+        // a preset that OMSI itself installs (the "PC 20xx" ones); add-on presets are not on every computer
+        let Some(p) = list(omsi).into_iter().find(|p| p.file_stem().is_some_and(|n| n.to_string_lossy().starts_with("PC 20"))) else { return };
         let preset = read(&p).unwrap();
         assert!(preset.entries.iter().any(|e| e.0 == "performance_maxObjDist"));
         let mut o = Options::load(omsi).unwrap();

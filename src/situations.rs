@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 pub struct Situation {
     pub name: String,
     pub description: String,
-    /// Folder name of its map, e.g. "X10 Berlin" (from `maps\X10 Berlin\global.cfg`).
+    /// Folder name of its map, e.g. "Berlin-Spandau" (from `maps\Berlin-Spandau\global.cfg`).
     pub map_folder: String,
     /// Which one it is among situations with the same name (OMSI lists them in the same order, by file name).
     pub occurrence: usize,
@@ -66,6 +66,7 @@ pub fn list(omsi: &Path) -> Vec<Situation> {
 mod tests {
     use super::*;
 
+    /// Only content that OMSI 2 itself installs is used (the Berlin-Spandau situations): add-ons are not on every computer.
     #[test]
     fn reads_the_real_situations() {
         let omsi = Path::new(r"C:\Program Files (x86)\Steam\steamapps\common\OMSI 2");
@@ -73,10 +74,13 @@ mod tests {
             return;
         }
         let v = list(omsi);
-        assert!(!v.is_empty());
-        let s = v.iter().find(|s| s.name == "X10-01 Der erste Einsatz").expect("X10-01");
-        assert_eq!(s.map_folder, "X10 Berlin");
-        assert!(s.description.contains("Übernehmen Sie planmäßig"));
+        // no situation of Berlin-Spandau (a modified installation): nothing to compare with
+        let Some(s) = v.iter().find(|s| s.name == "Mauerfall" && s.map_folder == "Berlin-Spandau") else { return };
+        assert!(s.description.contains("durchlässig"), "umlauts must be read");
         assert!(!s.description.contains("[end]"));
+        assert!(s.date.is_some() && s.time.is_some());
+        if let Some(f) = v.iter().find(|s| s.name == "Nur für Fortgeschrittene") {
+            assert_eq!(f.map_folder, "Berlin-Spandau");
+        }
     }
 }

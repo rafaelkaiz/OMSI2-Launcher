@@ -449,6 +449,7 @@ mod tests {
         unsafe { std::env::set_var("APPDATA", d.join("appdata")) };
         let mut o = Options::load(&d).unwrap();
         // the values of the user's real file change whenever they use OMSI's options, so the originals are read, not assumed
+        let had_sunglow = o.has("sunglow"); // whether the user has it on is up to them
         let (fps, tex0, tex1) = (o.get("maxFPS", 0).unwrap_or_default(), o.get("texFilter", 0).unwrap_or_default(), o.get("texFilter", 1).unwrap_or_default());
         assert!(!fps.is_empty());
         o.set("maxFPS", "GRAPHICS", 0, "120");
@@ -461,7 +462,7 @@ mod tests {
         assert_eq!(o2.get("maxFPS", 0).as_deref(), Some("120"));
         assert_eq!(o2.get("texFilter", 0).as_deref(), Some(tex0.as_str()));
         assert_eq!(o2.get("texFilter", 1).as_deref(), Some("8"));
-        assert!(o2.has("newflag1") && o2.has("newflag2") && o2.has("sunglow"));
+        assert!(o2.has("newflag1") && o2.has("newflag2") && o2.has("sunglow") == had_sunglow);
         assert_eq!(o2.get("brand_new_key", 0).as_deref(), Some("7"));
         // turning flags back off and values back restores the original bytes
         let mut o3 = Options::load(&d).unwrap();

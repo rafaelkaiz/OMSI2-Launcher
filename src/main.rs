@@ -17,6 +17,7 @@ mod presets;
 mod settings;
 mod situations;
 mod logo;
+mod testutil;
 mod theme;
 mod update;
 mod tutorials;
