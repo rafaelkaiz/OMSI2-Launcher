@@ -4,7 +4,8 @@
 //! situations, the "PC 20xx" presets, the languages in `Languages`, the tutorials and the weather list. Add-ons (other maps,
 //! add-on presets, the user's drivers or options) are not on every computer, and neither are the values the user has chosen
 //! (frame rate, sun glow, language...): a test must not expect them, it must read what is there and compare against that. When
-//! what a test needs is not there, it returns without failing.
+//! what a test needs is not there, it returns without failing. Temporary folders come from `unique_dir`, never from the process id
+//! alone.
 
 #[cfg(test)]
 mod tests {
@@ -44,4 +45,16 @@ mod tests {
         }
         assert!(found.is_empty(), "tests must only use what OMSI 2 installs (see src/testutil.rs):\n{}", found.join("\n"));
     }
+}
+
+/// A new, empty folder in the temp directory for one test. Never the same twice: Windows reuses process numbers, so a name made
+/// only from the process id can find the leftovers of an earlier run.
+#[cfg(test)]
+pub fn unique_dir(tag: &str) -> std::path::PathBuf {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    static COUNT: AtomicUsize = AtomicUsize::new(0);
+    let nanos = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|t| t.as_nanos()).unwrap_or(0);
+    let d = std::env::temp_dir().join(format!("omsi2l-{tag}-{}-{nanos}-{}", std::process::id(), COUNT.fetch_add(1, Ordering::Relaxed)));
+    std::fs::create_dir_all(&d).unwrap();
+    d
 }

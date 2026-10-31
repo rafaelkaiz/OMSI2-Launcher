@@ -121,7 +121,7 @@ mod tests {
     fn saving_a_preset_never_overwrites() {
         let real = Path::new(r"C:\Program Files (x86)\Steam\steamapps\common\OMSI 2");
         let Some(o) = Options::load(real) else { return };
-        let d = std::env::temp_dir().join(format!("omsi2-preset-test-{}", std::process::id()));
+        let d = crate::testutil::unique_dir("preset");
         std::fs::create_dir_all(&d).unwrap();
         let p = save_new(&d, "Mi preset", &o).unwrap();
         assert_eq!(std::fs::read(&p).unwrap(), o.to_bytes());

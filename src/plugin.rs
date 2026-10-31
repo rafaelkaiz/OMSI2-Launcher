@@ -94,7 +94,7 @@ mod tests {
 
     #[test]
     fn install_and_uninstall_touch_only_two_new_files() {
-        let d = std::env::temp_dir().join(format!("omsi2-plugin-test-{}", std::process::id()));
+        let d = crate::testutil::unique_dir("plugin");
         std::fs::create_dir_all(d.join("plugins")).unwrap();
         std::fs::write(d.join("plugins").join("Other.opl"), "x").unwrap();
         assert!(!installed(&d));

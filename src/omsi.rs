@@ -639,7 +639,7 @@ mod spawn_name_tests {
 
     #[test]
     fn place_names_may_start_with_brackets() {
-        let dir = std::env::temp_dir().join(format!("omsi2l-spawn-{}", std::process::id()));
+        let dir = crate::testutil::unique_dir("spawn");
         let map_dir = dir.join("maps").join("T");
         std::fs::create_dir_all(&map_dir).unwrap();
         std::fs::write(
