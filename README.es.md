@@ -69,6 +69,10 @@ Windows 10/11 de 64 bits. El programa no está firmado digitalmente, así que Sm
 
 Necesitas [Rust](https://rustup.rs/) (edición 2024) en Windows. Los comandos están en el [README en inglés](README.md#build-from-source).
 
+## Apoya el proyecto
+
+Si el launcher te ahorra tiempo y quieres darme las gracias, puedes [invitarme a un café](https://buymeacoffee.com/6zEaCpzmYU). Es totalmente opcional.
+
 ## Licencia
 
 OMSI 2 Launcher es software libre, publicado bajo la [GNU General Public License v3.0 o posterior](LICENSE). Copyright (C) 2026 Rafael Casaucao. Puedes usarlo, estudiarlo, compartirlo y modificarlo; si distribuyes una versión modificada debes hacerlo con la misma licencia y poniendo su código fuente a disposición de quien lo reciba.
