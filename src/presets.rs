@@ -68,7 +68,16 @@ pub fn apply(options: &mut Options, preset: &Preset, managed_flags: &[&str]) {
             options.set_flag(k, "", false);
         }
     }
+    // These values exist in options.cfg only while they are in use (a radio link, a manual screen ratio): a preset without them
+    // means "none", so what was there before must not stay.
+    for k in OPTIONAL_VALUES {
+        if !preset.entries.iter().any(|(pk, _, _)| pk.eq_ignore_ascii_case(k)) {
+            options.remove(k);
+        }
+    }
 }
+
+const OPTIONAL_VALUES: [&str; 2] = ["radio", "screenratio"];
 
 /// Saves the current options as a NEW preset `option_presets\<name>.oop`. Never overwrites an existing preset.
 pub fn save_new(omsi: &Path, name: &str, options: &Options) -> Result<PathBuf, String> {
@@ -128,5 +137,27 @@ mod tests {
         assert_eq!(o.get("performance_maxObjDist", 0), Some(want));
         assert_eq!(o.get("last_map", 0), map);
         assert_eq!(o.get("language", 0), language);
+    }
+}
+
+#[cfg(test)]
+mod optional_tests {
+    use super::*;
+
+    #[test]
+    fn a_preset_without_a_radio_link_removes_the_current_one() {
+        let text = "[radio]\nhttp://example.test/radio\n\n[maxFPS]\n60\n";
+        let d = std::env::temp_dir().join(format!("omsi2l-radio-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|t| t.as_nanos()).unwrap_or(0)));
+        std::fs::create_dir_all(&d).unwrap();
+        std::fs::write(d.join("options.cfg"), text).unwrap();
+        let mut o = Options::load(&d).unwrap();
+        let preset = Preset { name: "x".into(), entries: vec![("maxFPS".into(), "GRAPHICS".into(), vec!["30".into()])] };
+        apply(&mut o, &preset, &[]);
+        assert!(!o.has("radio"));
+        assert_eq!(o.get("maxFPS", 0).as_deref(), Some("30"));
+        // and one that has a link sets it
+        let with = Preset { name: "y".into(), entries: vec![("radio".into(), "GENERAL".into(), vec!["http://other.test".into()])] };
+        apply(&mut o, &with, &[]);
+        assert_eq!(o.get("radio", 0).as_deref(), Some("http://other.test"));
     }
 }
