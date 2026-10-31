@@ -274,6 +274,17 @@ impl App {
         if !self.plugin_ok {
             return;
         }
+        // "current date and time" is the time, the date and the year
+        if self.time_mode == TimeMode::Now {
+            if let Some(o) = self.options.as_mut() {
+                for k in ["useActTime", "useActDate", "useActYear"] {
+                    if !o.has(k) {
+                        o.set_flag(k, "GENERAL", true);
+                        self.options_ui.dirty = true;
+                    }
+                }
+            }
+        }
         // Settings changed on the start screen (date/time, weather station...) are written before OMSI reads them.
         if self.options_ui.dirty && !self.running.1 {
             if let Some(o) = &self.options {
@@ -821,15 +832,6 @@ impl App {
         }
     }
 
-    /// A checkbox bound to a flag of options.cfg; marks the options as changed.
-    fn flag_box(&mut self, ui: &mut egui::Ui, key: &str, section: &str, label: &str, enabled: bool) {
-        let Some(o) = self.options.as_mut() else { return };
-        let mut on = o.has(key);
-        if ui.add_enabled(enabled, egui::Checkbox::new(&mut on, label)).changed() {
-            o.set_flag(key, section, on);
-            self.options_ui.dirty = true;
-        }
-    }
 
     fn driver_section(&mut self, ui: &mut egui::Ui, running: bool) {
         let photo = self.drivers.get(self.driver).and_then(|d| {
@@ -884,20 +886,14 @@ impl App {
             // The "use current" options only apply in the "actuales" mode; the others must have them off.
             if let Some(o) = self.options.as_mut() {
                 for k in ["useActTime", "useActDate", "useActYear"] {
-                    o.set_flag(k, "GENERAL", mode == TimeMode::Now && k != "useActYear");
+                    o.set_flag(k, "GENERAL", mode == TimeMode::Now);
                 }
             }
             self.options_ui.dirty = true;
         }
         match self.time_mode {
-            TimeMode::Now => {
-                ui.horizontal(|ui| {
-                    ui.add_space(24.0);
-                    self.flag_box(ui, "useActTime", "GENERAL", tr("Hora"), true);
-                    self.flag_box(ui, "useActDate", "GENERAL", tr("Fecha"), true);
-                    self.flag_box(ui, "useActYear", "GENERAL", tr("Año"), true);
-                });
-            }
+            // "current date and time" means the time, the date and the year: no separate choices
+            TimeMode::Now => {}
             TimeMode::Custom => {
                 // like OMSI: a summary and a button that opens the "Seleccionar hora y fecha" window
                 ui.horizontal(|ui| {
