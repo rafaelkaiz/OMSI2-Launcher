@@ -2,7 +2,7 @@
 
 **Un launcher rápido y moderno para el simulador de autobuses OMSI 2 original.** Elige el mapa, el conductor, la fecha y la hora, pulsa *Iniciar* y OMSI 2 se abre y carga el mapa por ti, sin pasar a mano por la pantalla de inicio.
 
-> **Versión 0.9-beta3** — tercera versión pública de pruebas (mira las [notas de la versión](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [English](README.md) · [Página web](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Descargar](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
+> **Versión 0.9-rc1** — primera versión candidata (debería ser el último paso antes de la 0.9) (mira las [notas de la versión](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [English](README.md) · [Página web](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Descargar](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
 
 ![El launcher](docs/img/launcher.png)
 
@@ -49,14 +49,14 @@ Por ahora el plugin solo reconoce **OMSI 2 versión 2.3.004**.
 
 ## Instalación
 
-1. Descarga `OMSI2-Launcher-0.9-beta3-win64.zip` de la [página de versiones](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) y descomprímelo donde quieras.
+1. Descarga `OMSI2-Launcher-0.9-rc1-win64.zip` de la [página de versiones](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) y descomprímelo donde quieras.
 2. Ejecuta `OMSI2-Launcher.exe`. Encuentra OMSI 2 solo (carpetas habituales de Steam o Aerosoft); si no puede, te pregunta dónde está.
 3. Abre **Ajustes del launcher** y pulsa **Instalar plugin**.
 4. Elige mapa y conductor y pulsa **Iniciar**.
 
 Windows 10/11 de 64 bits. El programa no está firmado digitalmente, así que SmartScreen o tu antivirus pueden avisar la primera vez: es un archivo nuevo y desconocido, no una amenaza detectada. Puedes revisar y compilar el código tú mismo.
 
-## Limitaciones conocidas (beta)
+## Limitaciones conocidas
 
 - Las pestañas *Teclado* y *Controlador* de las opciones aún no están implementadas (usa las opciones propias de OMSI para eso).
 - El plugin solo reconoce OMSI 2 2.3.004.

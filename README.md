@@ -2,7 +2,7 @@
 
 **A fast, modern launcher for the vanilla OMSI 2 bus simulator.** Pick the map, driver, date and time, press *Start* and OMSI 2 opens and loads the map for you, with no clicking through the start screen.
 
-> **Version 0.9-beta3** — third public test release (see the [release notes](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [Español](README.es.md) · [Web page](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Download](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
+> **Version 0.9-rc1** — release candidate 1 (it should be the last step before 0.9) (see the [release notes](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [Español](README.es.md) · [Web page](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Download](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
 
 ![The launcher](docs/img/launcher.png)
 
@@ -49,14 +49,14 @@ The plugin currently recognises **OMSI 2 version 2.3.004** only.
 
 ## Install
 
-1. Download `OMSI2-Launcher-0.9-beta3-win64.zip` from the [releases page](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) and unzip it anywhere.
+1. Download `OMSI2-Launcher-0.9-rc1-win64.zip` from the [releases page](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) and unzip it anywhere.
 2. Run `OMSI2-Launcher.exe`. It finds OMSI 2 by itself (Steam or Aerosoft default folders); if it cannot, it asks where it is.
 3. Open **Launcher settings** and press **Install plugin**.
 4. Choose your map and driver and press **Start**.
 
 Windows 10/11, 64-bit. The program is not code-signed, so Windows SmartScreen or your antivirus may warn about it the first time: it is a new, unknown file, not a detected threat. You can review and build the source yourself.
 
-## Known limitations (beta)
+## Known limitations
 
 - The *Keyboard* and *Controller* tabs of the options window are not implemented yet (use OMSI's own options for those).
 - The plugin only recognises OMSI 2 2.3.004.

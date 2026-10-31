@@ -6,8 +6,8 @@ use std::sync::{Arc, Mutex};
 /// GitHub repository whose releases are checked ("owner/name").
 pub const REPO: &str = "rafaelkaiz/OMSI2-Launcher";
 
-/// The version as people read it ("0.9-beta1"); `VERSION` is the same in the form Cargo and the version comparison use.
-pub const LABEL: &str = "0.9-beta3";
+/// The version as people read it ("0.9-rc1"); `VERSION` is the same in the form Cargo and the version comparison use.
+pub const LABEL: &str = "0.9-rc1";
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -67,26 +67,46 @@ fn json_string(json: &str, key: &str) -> Option<String> {
     Some(rest[..rest.find('"')?].to_string())
 }
 
-fn parts(v: &str) -> (Vec<u32>, Vec<u32>) {
+/// Splits a version into its numbers and its pre-release identifiers ("0.9.0-rc.1" is [0, 9, 0] and ["rc", "1"]).
+fn parts(v: &str) -> (Vec<u32>, Vec<String>) {
     let v = v.trim_start_matches(['v', 'V']);
     let (core, pre) = v.split_once('-').map_or((v, ""), |(c, p)| (c, p));
-    let nums = |s: &str| s.split(|c: char| !c.is_ascii_digit()).filter(|p| !p.is_empty()).map(|p| p.parse().unwrap_or(0)).collect::<Vec<u32>>();
-    (nums(core), nums(pre))
+    let nums = core.split('.').map(|p| p.chars().take_while(char::is_ascii_digit).collect::<String>().parse().unwrap_or(0)).collect();
+    (nums, pre.split('.').filter(|p| !p.is_empty()).map(str::to_string).collect())
 }
 
-/// Semantic order: 0.9.0-beta.1 < 0.9.0-beta.2 < 0.9.0 < 0.10.0.
+/// Order of two pre-release identifiers: numbers by value, words alphabetically (alpha < beta < rc), numbers before words.
+fn identifier_order(a: &str, b: &str) -> std::cmp::Ordering {
+    match (a.parse::<u64>(), b.parse::<u64>()) {
+        (Ok(x), Ok(y)) => x.cmp(&y),
+        (Ok(_), Err(_)) => std::cmp::Ordering::Less,
+        (Err(_), Ok(_)) => std::cmp::Ordering::Greater,
+        _ => a.cmp(b),
+    }
+}
+
+/// Semantic order: 0.9.0-beta.3 < 0.9.0-rc.1 < 0.9.0 < 0.10.0.
 fn is_newer(tag: &str, current: &str) -> bool {
     let ((a, pa), (b, pb)) = (parts(tag), parts(current));
-    let (has_pre_a, has_pre_b) = (tag.contains('-'), current.contains('-'));
     if a != b {
         return a > b;
     }
-    match (has_pre_a, has_pre_b) {
-        (false, true) => true,
-        (true, false) => false,
-        _ => pa > pb,
+    match (pa.is_empty(), pb.is_empty()) {
+        (true, false) => true,
+        (false, true) => false,
+        (true, true) => false,
+        (false, false) => {
+            for (x, y) in pa.iter().zip(pb.iter()) {
+                match identifier_order(x, y) {
+                    std::cmp::Ordering::Equal => continue,
+                    o => return o == std::cmp::Ordering::Greater,
+                }
+            }
+            pa.len() > pb.len()
+        }
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -102,6 +122,13 @@ mod tests {
         assert!(is_newer("v0.9.0-beta.2", "0.9.0-beta.1"));
         assert!(!is_newer("v0.9.0-beta.1", "0.9.0-beta.1"));
         assert!(!is_newer("v0.9.0-beta.1", "0.9.0"));
+        // a release candidate is newer than every beta and older than the final version
+        assert!(is_newer("v0.9.0-rc.1", "0.9.0-beta.3"));
+        assert!(is_newer("v0.9.0-rc.2", "0.9.0-rc.1"));
+        assert!(!is_newer("v0.9.0-beta.3", "0.9.0-rc.1"));
+        assert!(is_newer("v0.9.0", "0.9.0-rc.1"));
+        assert!(!is_newer("v0.9.0-rc.1", "0.9.0"));
+        assert!(is_newer("v0.9.0-beta.10", "0.9.0-beta.9"));
     }
 
     #[test]
