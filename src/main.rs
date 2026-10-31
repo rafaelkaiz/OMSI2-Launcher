@@ -94,6 +94,8 @@ struct App {
     mode: LoadMode,
     status: Arc<Mutex<String>>,
     busy: Arc<Mutex<bool>>,
+    /// The tutorial (1..4) being started, so the loading screen names it instead of the selected map.
+    loading_tutorial: Option<u8>,
     running: (Instant, bool),
     options: Option<cfg::Options>,
     options_ui: options_ui::State,
@@ -249,7 +251,8 @@ impl App {
             load_started: None,
             status: Arc::new(Mutex::new(status.into())),
             // dev shortcut for screenshots: OMSI2_OPEN=loading shows the loading screen
-            busy: Arc::new(Mutex::new(std::env::var("OMSI2_OPEN").as_deref() == Ok("loading"))),
+            busy: Arc::new(Mutex::new(matches!(std::env::var("OMSI2_OPEN").as_deref(), Ok("loading") | Ok("loadingtut")))),
+            loading_tutorial: (std::env::var("OMSI2_OPEN").as_deref() == Ok("loadingtut")).then_some(1), // dev: OMSI2_OPEN=loadingtut
             running: (Instant::now() - Duration::from_secs(10), false),
             options,
             options_ui,
@@ -269,6 +272,7 @@ impl App {
 
     fn start(&mut self, ctx: &egui::Context, mode: LoadMode) {
         log::line(&format!("start: map #{} driver #{} situation {:?}", self.map, self.driver, self.sit_sel));
+        self.loading_tutorial = if let LoadMode::Tutorial(n) = mode { Some(n) } else { None };
         let (Some(dir), Some(map)) = (self.omsi.clone(), self.maps.get(self.map).cloned()) else { return };
         if !self.plugin_ok {
             return;
@@ -899,9 +903,6 @@ impl App {
                 if ui.add_enabled(enabled, egui::Button::new(tr("Crear nuevo conductor")).min_size(egui::vec2(300.0, 28.0))).clicked() {
                     self.driver_edit = Some(DriverEdit::new(None));
                 }
-                if let Some(d) = self.drivers.get(self.driver) {
-                    ui.label(format!("{} {:.1} km  ·  {} {}", tr("Distancia:"), d.hektometers as f64 / 10.0, tr("Paradas:"), d.stops));
-                }
                 if running {
                     ui.label(RichText::new(tr("Cierra OMSI 2 para editar conductores.")).italics());
                 }
@@ -1043,6 +1044,9 @@ impl App {
     }
 
     fn loading_screen(&mut self, ui: &mut egui::Ui) {
+        if self.loading_tutorial.is_some() && self.tut_entries.is_empty() {
+            self.load_tutorials();
+        }
         let map = self.maps.get(self.map).cloned();
         let elapsed = self.load_started.map(|t| t.elapsed().as_secs()).unwrap_or(0);
         let status = self.status.lock().unwrap().clone();
@@ -1054,7 +1058,17 @@ impl App {
                 ui.add_space(18.0);
                 ui.label(RichText::new(tr("Cargando OMSI 2...")).size(30.0).strong());
                 ui.add_space(6.0);
-                if let Some(m) = &map {
+                if let Some(n) = self.loading_tutorial {
+                    // a tutorial is loading, not the selected map: show the tutorial's name and picture
+                    let entry = self.tut_entries.get(n as usize).filter(|e| !e.title.is_empty());
+                    let name = entry.map(|e| e.title.clone()).unwrap_or_else(|| [tr("Tutorial I"), tr("Tutorial II"), tr("Tutorial III"), tr("Tutorial IV")][(n as usize).clamp(1, 4) - 1].to_string());
+                    ui.label(RichText::new(name).size(18.0));
+                    if let Some(p) = entry.and_then(|e| e.picture.as_ref()) {
+                        ui.add_space(10.0);
+                        let uri = format!("file:///{}", p.display().to_string().replace('\\', "/"));
+                        ui.add(egui::Image::new(uri).max_height(240.0).maintain_aspect_ratio(true));
+                    }
+                } else if let Some(m) = &map {
                     ui.label(RichText::new(format!("{} {}", tr("Mapa:"), m.name)).size(18.0));
                     if let Some(p) = &m.picture {
                         ui.add_space(10.0);

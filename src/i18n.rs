@@ -301,8 +301,6 @@ const ROWS: &[Row] = &[
     ("Conductor actual:", ["Current driver:", "Aktueller Fahrer:", "Bieżący kierowca:", "Aktuální řidič:", "Conducteur actuel :", "Condutor atual:"]),
     ("Editar conductor", ["Edit driver", "Fahrer bearbeiten", "Edytuj kierowcę", "Upravit řidiče", "Modifier le conducteur", "Editar condutor"]),
     ("Crear nuevo conductor", ["Create new driver", "Neuen Fahrer erstellen", "Utwórz nowego kierowcę", "Vytvořit nového řidiče", "Créer un nouveau conducteur", "Criar novo condutor"]),
-    ("Distancia:", ["Distance:", "Strecke:", "Dystans:", "Vzdálenost:", "Distance :", "Distância:"]),
-    ("Paradas:", ["Stops:", "Haltestellen:", "Przystanki:", "Zastávky:", "Arrêts :", "Paragens:"]),
     ("Cierra OMSI 2 para editar conductores.", [
         "Close OMSI 2 to edit drivers.",
         "Schließe OMSI 2, um Fahrer zu bearbeiten.",
