@@ -621,7 +621,7 @@ impl App {
                 }
             });
             ui.add_space(8.0);
-            egui::ScrollArea::vertical().max_height(240.0).min_scrolled_height(240.0).auto_shrink([false, false]).show(ui, |ui| {
+            egui::ScrollArea::vertical().max_height(330.0).min_scrolled_height(330.0).auto_shrink([false, false]).show(ui, |ui| {
                 card(ui, tr("Apariencia"), self.settings_tab == 0, &mut |ui| {
                     ui.horizontal(|ui| {
                         ui.label(tr("Idioma del launcher"));
@@ -1238,7 +1238,10 @@ impl eframe::App for App {
                 });
                 section(ui, |ui| self.driver_section(ui, running));
                 section(ui, |ui| self.time_section(ui, running));
-                section(ui, |ui| self.weather_section(ui));
+                // the box exists only when the map has time information for the date (it is empty otherwise)
+                if !self.chrono_text().is_empty() {
+                    section(ui, |ui| self.weather_section(ui));
+                }
 
                 // ------------------------------------------------------------------ right: map
                 let ui = &mut cols[1];
