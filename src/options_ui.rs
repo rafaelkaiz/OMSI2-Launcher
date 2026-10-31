@@ -65,6 +65,9 @@ const MANAGED_FLAGS: &[&str] = &[
     "sound_scenery",
     "sound_noreverb",
     "useLowAIList",
+    "useActTime",
+    "useActDate",
+    "useActYear",
 ];
 
 fn managed_flags() -> Vec<&'static str> {
