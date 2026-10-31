@@ -22,7 +22,6 @@ mod testutil;
 mod theme;
 mod update;
 mod tutorials;
-mod weather;
 
 use eframe::egui::{self, Color32, RichText};
 use omsi::LoadMode;
@@ -111,7 +110,6 @@ struct App {
     spawn_points: Vec<String>,
     spawn_map: Option<usize>,
     sit_only_map: bool,
-    stations: Vec<String>,
     chrono_cache: Option<((String, chrono::Date, &'static str), String)>,
     close_requested: Arc<AtomicBool>,
     minimize_requested: Arc<AtomicBool>,
@@ -200,7 +198,6 @@ impl App {
         };
         let (y, m, d) = cfg::today();
         let sit_list = omsi.as_deref().map(situations::list).unwrap_or_default();
-        let station_list = omsi.as_deref().map(weather::stations).unwrap_or_default();
         let mut options_ui = options_ui::State::default();
         options_ui.open = std::env::var("OMSI2_OPEN").as_deref() == Ok("options"); // dev shortcut for screenshots
         options_ui.set_tab(std::env::var("OMSI2_TAB").ok().and_then(|t| t.parse().ok()).unwrap_or(0));
@@ -236,7 +233,6 @@ impl App {
             spawn_points: Vec::new(),
             spawn_map: None,
             sit_only_map: true,
-            stations: station_list,
             chrono_cache: None,
             close_requested: Arc::new(AtomicBool::new(false)),
             minimize_requested: Arc::new(AtomicBool::new(false)),
@@ -289,7 +285,7 @@ impl App {
                 }
             }
         }
-        // Settings changed on the start screen (date/time, weather station...) are written before OMSI reads them.
+        // Settings changed on the start screen (date, time...) are written before OMSI reads them.
         if self.options_ui.dirty && !self.running.1 {
             if let Some(o) = &self.options {
                 match o.save() {
@@ -964,24 +960,6 @@ impl App {
 
     fn weather_section(&mut self, ui: &mut egui::Ui) {
         ui.label(tr("Información sobre el tiempo seleccionado:"));
-        if let Some(o) = self.options.as_mut() {
-            ui.horizontal(|ui| {
-                ui.label(tr("Estación meteorológica (ICAO):"));
-                let current = o.get("currWeather_ICAO", 0).unwrap_or_default();
-                // The stations OMSI knows (Weather\ICAO.txt); a code that is not in the list is still shown and kept.
-                let mut entries = self.stations.clone();
-                if !current.is_empty() && !entries.iter().any(|e| weather::code(e).eq_ignore_ascii_case(&current)) {
-                    entries.insert(0, current.clone());
-                }
-                let mut sel = entries.iter().position(|e| weather::code(e).eq_ignore_ascii_case(&current)).unwrap_or(0);
-                if pick::pick(ui, "icao", 220.0, &entries, &mut sel) {
-                    if let Some(e) = entries.get(sel) {
-                        o.set("currWeather_ICAO", "GENERAL", 0, weather::code(e));
-                        self.options_ui.dirty = true;
-                    }
-                }
-            });
-        }
         let text = self.chrono_text();
         if !text.is_empty() {
             egui::Frame::new().fill(pal().field).stroke(egui::Stroke::new(1.0, pal().dark)).inner_margin(6).show(ui, |ui| {

@@ -135,7 +135,7 @@ No tab of the Options window edits these; OMSI writes them while you play or fro
 | --- | --- | --- | --- |
 | `last_map` | last map chosen on the start screen (`maps\<map>\global.cfg`) | free text | 68/68 |
 | `last_driver` | last driver chosen (`Drivers\<name>.odr`) | free text | 68/68 |
-| `currWeather_ICAO` | weather station of the start screen | free text | 68/68 |
+| `currWeather_ICAO` | weather station (chosen inside the game) | free text | 68/68 |
 | `nopreview` | hide the bus previews when choosing a vehicle inside the game | on/off: present = on | 18/68 |
 | `gamectrleron` | game controller switched on; OMSI sets it itself when it finds a wheel or pad | on/off: present = on | 27/68 |
 | `no_tex_low_high_switch` | switching between low and high resolution textures | on/off: present = on | 5/68 |

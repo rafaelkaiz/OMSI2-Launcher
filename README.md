@@ -9,7 +9,7 @@
 ## What it does
 
 - **One-click start**: open OMSI 2 Launcher, pick your map and driver, and it starts OMSI 2 and loads the map: last map state, map without buses, or a saved situation.
-- **Date and time**: like OMSI's start screen: change them in a window of their own (time, the four times of day, date, weekday and the map's holidays) or keep the situation's, plus the weather station (ICAO).
+- **Date and time**: like OMSI's start screen: change them in a window of their own (time, the four times of day, date, weekday and the map's holidays) or keep the situation's.
 - **Choose where to appear**: with "Load map without buses", pick the map's start place in the launcher and it answers OMSI's "Set position" window for you.
 - **Tutorials 1–4** straight from the launcher.
 - **OMSI's options window, rebuilt**: General, Advanced, Graphics, Graphics (advanced), Sound and AI traffic, laid out like the original. Load option presets and save your current options as a new preset.

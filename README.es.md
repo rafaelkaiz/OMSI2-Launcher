@@ -9,7 +9,7 @@
 ## Qué hace
 
 - **Inicio con un clic**: abre OMSI 2 Launcher, elige tu mapa y conductor y él inicia OMSI 2 y carga el mapa: último estado, mapa sin autobuses o una situación guardada.
-- **Fecha y hora**: como la pantalla de inicio de OMSI: se cambian en una ventana propia (hora, las cuatro franjas del día, fecha, día de la semana y festivos del mapa) o se deja la de la situación, más la estación meteorológica (ICAO).
+- **Fecha y hora**: como la pantalla de inicio de OMSI: se cambian en una ventana propia (hora, las cuatro franjas del día, fecha, día de la semana y festivos del mapa) o se deja la de la situación.
 - **Elige dónde aparecer**: con "Cargar mapa sin autobuses", eliges el punto de inicio del mapa en el launcher y él responde a la ventana "Establecer posición" de OMSI.
 - **Tutoriales 1–4** directamente desde el launcher.
 - **La ventana de opciones de OMSI, reconstruida**: General, Avanzado, Gráficos, Gráficos (avanzado), Sonido y Tráfico IA, con la misma disposición que el original. Carga presets de opciones y guarda tus opciones actuales como un preset nuevo.
