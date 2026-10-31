@@ -270,11 +270,11 @@ fn graphics(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     let mut c = false;
     let plain = |v: i64| v.to_string();
     cv.label(ui, 21.0, 19.0, 250.0, &cv.t("DG_Options_Label2", "Framerate objetivo"));
-    c |= cv.slider_i(ui, o, 122.0, 24.0, 150.0, "maxFPS", "GRAPHICS", 0, (20, 200), (21.0, 42.0, &plain));
+    c |= cv.slider_i(ui, o, 122.0, 24.0, 150.0, "maxFPS", "GRAPHICS", 0, (10, 200), (21.0, 42.0, &plain));
     cv.label(ui, 21.0, 70.0, 250.0, &cv.t("DG_Options_Label8", "Cantidad de baldosas vecinas"));
-    c |= cv.slider_i(ui, o, 122.0, 75.0, 150.0, "performance_tiledistmax", "GRAPHICS", 0, (0, 8), (21.0, 93.0, &plain));
+    c |= cv.slider_i(ui, o, 122.0, 75.0, 150.0, "performance_tiledistmax", "GRAPHICS", 0, (1, 20), (21.0, 93.0, &plain));
     cv.label(ui, 21.0, 120.0, 250.0, &cv.t("DG_Options_Label15", "Distancia máxima de visibilidad de objetos"));
-    c |= cv.slider_f(ui, o, 122.0, 125.0, 150.0, "performance_maxObjDist", "GRAPHICS", (50.0, 3000.0), 3, Some((21.0, 143.0, &|v: f64| format!("{v:.0}"))));
+    c |= cv.slider_f(ui, o, 122.0, 125.0, 150.0, "performance_maxObjDist", "GRAPHICS", (20.0, 5000.0), 3, Some((21.0, 143.0, &|v: f64| format!("{v:.0}"))));
     cv.label(ui, 21.0, 177.0, 260.0, &cv.t("DG_Options_Label19", "Tamaño mínimo de objeto (% tamaño de pantalla)"));
     percent(cv, ui, o, 122.0, 182.0, "performance_minObjSize", &mut c);
     cv.label(ui, 21.0, 232.0, 250.0, &cv.t("DG_Options_Label27", "… para reflexiones"));
@@ -323,7 +323,7 @@ fn graphics(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
 /// A "% of screen size" slider: the file holds a fraction (0.046), OMSI shows 4.60 %.
 fn percent(cv: &Canvas, ui: &mut Ui, o: &mut Options, x: f32, y: f32, key: &str, changed: &mut bool) {
     let mut v: f64 = o.get(key, 0).and_then(|s| s.parse::<f64>().ok()).unwrap_or(0.0) * 100.0;
-    if cv.put(ui, cv.rect(x, y, 150.0, 20.0), egui::Slider::new(&mut v, 0.0..=10.0).show_value(false)).changed() {
+    if cv.put(ui, cv.rect(x, y, 150.0, 20.0), egui::Slider::new(&mut v, 0.0..=50.0).show_value(false)).changed() {
         o.set(key, "GRAPHICS", 0, &format!("{:.3}", v / 100.0));
         *changed = true;
     }
@@ -367,8 +367,8 @@ fn graphics_advanced(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     c |= cv.number(ui, o, 478.0, 196.0, 70.0, "texmemlimit", "GRAPHICS", 0, 1);
     cv.label(ui, 556.0, 207.0, 24.0, "MB");
     cv.label(ui, 215.0, 247.0, 355.0, &cv.t("DG_Options_Label28", "Tamaño de textura de reflexiones en tiempo real"));
-    let mut size: i64 = o.get("performance_reflTexSize", 0).and_then(|s| s.parse().ok()).unwrap_or(8).clamp(6, 13);
-    if cv.put(ui, cv.rect(290.0, 257.0, 148.0, 20.0), egui::Slider::new(&mut size, 6..=12).show_value(false)).changed() {
+    let mut size: i64 = o.get("performance_reflTexSize", 0).and_then(|s| s.parse().ok()).unwrap_or(8).clamp(0, 13);
+    if cv.put(ui, cv.rect(290.0, 257.0, 148.0, 20.0), egui::Slider::new(&mut size, 0..=12).show_value(false)).changed() {
         o.set("performance_reflTexSize", "GRAPHICS", 0, &size.to_string());
         c = true;
     }
@@ -393,11 +393,16 @@ fn graphics_advanced(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
 fn sound(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     let mut c = false;
     cv.label(ui, 21.0, 19.0, 160.0, &cv.t("DG_Options_Label10", "Volumen general"));
-    c |= cv.slider_f(ui, o, 187.0, 8.0, 150.0, "sound_vol_master", "SOUND", (0.0, 1.0), 6, None);
+    // OMSI's slider has ten steps (1 to 10): the file holds step / 10
+    let mut vol: i64 = (o.get("sound_vol_master", 0).and_then(|s| s.parse::<f64>().ok()).unwrap_or(1.0) * 10.0).round().clamp(1.0, 10.0) as i64;
+    if cv.put(ui, cv.rect(187.0, 8.0, 150.0, 20.0), egui::Slider::new(&mut vol, 1..=10).show_value(false)).changed() {
+        o.set("sound_vol_master", "SOUND", 0, &format!("{:.6}", vol as f64 / 10.0));
+        c = true;
+    }
     cv.label(ui, 21.0, 59.0, 160.0, &cv.t("DG_Options_Label6", "Efecto estéreo"));
     c |= cv.slider_i(ui, o, 187.0, 64.0, 150.0, "sound_stereo", "SOUND", 0, (0, 100), (21.0, 75.0, &|v: i64| v.to_string()));
     cv.label(ui, 21.0, 154.0, 200.0, &cv.t("DG_Options_Label17", "Recuento máximo de sonidos"));
-    c |= cv.slider_i(ui, o, 187.0, 169.0, 150.0, "sound_maxcount", "SOUND", 0, (16, 1000), (21.0, 178.0, &|v: i64| v.to_string()));
+    c |= cv.slider_i(ui, o, 187.0, 169.0, 150.0, "sound_maxcount", "SOUND", 0, (5, 1000), (21.0, 178.0, &|v: i64| v.to_string()));
     c |= cv.flag(ui, o, 30.0, 220.0, 300.0, &cv.t("DG_Options_CheckBox14", "Sonidos de vehículos IA activos"), "sound_ai", "SOUND", false);
     c |= cv.flag(ui, o, 30.0, 244.0, 300.0, &cv.t("DG_Options_CheckBox15", "Sonidos del entorno activos"), "sound_scenery", "SOUND", false);
     c |= cv.on_off(ui, o, 30.0, 268.0, 300.0, &cv.t("DG_Options_CheckBox2", "Efecto Doppler"), "sound_doppler", "SOUND");
@@ -409,12 +414,12 @@ fn traffic(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     let mut c = false;
     cv.label(ui, 21.0, 19.0, 150.0, &cv.t("DG_Options_Label4", "Recuento máx. de tráfico rodado"));
     cv.label(ui, 165.0, 19.0, 190.0, &cv.t("DG_Options_Label21", "No programado (ej.: coches)"));
-    c |= cv.slider_i(ui, o, 155.0, 21.0, 148.0, "AIMaxCountRandom", "AI", 0, (0, 500), (121.0, 40.0, &|v: i64| v.to_string()));
+    c |= cv.slider_i(ui, o, 155.0, 21.0, 148.0, "AIMaxCountRandom", "AI", 0, (0, 1000), (121.0, 40.0, &|v: i64| v.to_string()));
     cv.label(ui, 388.0, 19.0, 190.0, &cv.t("DG_Options_Label22", "Programado (ej.: autobuses)"));
-    c |= cv.slider_i(ui, o, 380.0, 21.0, 148.0, "AIMaxCountScheduled", "AI", 0, (0, 100), (333.0, 40.0, &|v: i64| v.to_string()));
+    c |= cv.slider_i(ui, o, 380.0, 21.0, 148.0, "AIMaxCountScheduled", "AI", 0, (0, 1000), (333.0, 40.0, &|v: i64| v.to_string()));
 
     cv.label(ui, 21.0, 100.0, 140.0, &cv.t("DG_Options_Label_RTFactor", "Factor de tráfico en la carretera"));
-    c |= cv.slider_i(ui, o, 230.0, 90.0, 100.0, "AIUnschedFactor", "AI", 0, (0, 300), (185.0, 100.0, &|v: i64| format!("{v} %")));
+    c |= cv.slider_i(ui, o, 230.0, 90.0, 100.0, "AIUnschedFactor", "AI", 0, (1, 300), (185.0, 100.0, &|v: i64| format!("{v} %")));
     cv.label(ui, 332.0, 82.0, 200.0, &cv.t("DG_Options_Label67", "Prioridad del horario"));
     c |= cv.slider_i(ui, o, 378.0, 93.0, 148.0, "AIPriorityScheduled", "AI", 0, (1, 4), (378.0, 132.0, &|_v: i64| "1".to_string()));
     cv.value(ui, 520.0, 132.0, "4");
@@ -424,11 +429,11 @@ fn traffic(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     c |= cv.flag(ui, o, 349.0, 192.0, 190.0, &cv.t("DG_Options_CheckBox51", "Usar lista de IA reducida (menos tipos diferentes)"), "useLowAIList", "AI", false);
 
     cv.label(ui, 21.0, 264.0, 200.0, &cv.t("DG_Options_Label13", "Recuento máx. de personas"));
-    c |= cv.slider_i(ui, o, 155.0, 273.0, 148.0, "AIMaxCountRandom", "AI", 1, (0, 500), (110.0, 289.0, &|v: i64| v.to_string()));
+    c |= cv.slider_i(ui, o, 155.0, 273.0, 148.0, "AIMaxCountRandom", "AI", 1, (0, 1000), (110.0, 289.0, &|v: i64| v.to_string()));
     cv.note(ui, 329.0, 294.0, 225.0, 50.0, &cv.t("DG_Options_Label39", "El valor de Recuento máx. de personas es el límite superior para todas las personas visibles."));
 
     cv.label(ui, 21.0, 337.0, 220.0, &cv.t("DG_Options_Label37", "Factor de pasajeros en estaciones"));
-    c |= cv.slider_i(ui, o, 155.0, 352.0, 148.0, "AIPassFactor", "AI", 0, (0, 300), (110.0, 362.0, &|v: i64| format!("{v} %")));
+    c |= cv.slider_i(ui, o, 155.0, 352.0, 148.0, "AIPassFactor", "AI", 0, (0, 200), (110.0, 362.0, &|v: i64| format!("{v} %")));
     cv.note(ui, 329.0, 379.0, 225.0, 70.0, &cv.t("DG_Options_Label40", "¡Ten en cuenta que no puede haber más pasajeros que el valor de Recuento máx. de personas en todas las estaciones del área visible!"));
     let _ = Color32::WHITE;
     c
