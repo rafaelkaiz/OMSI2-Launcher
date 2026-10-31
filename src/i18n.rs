@@ -2,73 +2,181 @@
 //! to the Spanish original when a string has no translation. Strings with `{}` are templates filled in with `trf`.
 
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicU8, Ordering};
-use std::sync::OnceLock;
+use std::path::{Path, PathBuf};
+use std::sync::{Mutex, OnceLock, RwLock};
 
-#[derive(Clone, Copy, PartialEq, Debug)]
-pub enum Lang {
-    Es,
-    En,
-    De,
-    Pl,
-    Cs,
-    Fr,
-    Pt,
-}
+/// A language, named by the three letters OMSI uses for it in `Languages\<CODE>_basic.olf` (ESP, ENG, DEU...).
+///
+/// Seven languages are built into the launcher. Any other one OMSI has (a Chinese `CHN_basic.olf`, say) appears in the list too, and
+/// its launcher texts come from a file `%APPDATA%\OMSI2-Launcher\lang\<CODE>.txt` (see `write_template`).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct Lang(&'static str);
 
+#[allow(non_upper_case_globals)]
 impl Lang {
-    pub const ALL: [Lang; 7] = [Lang::Es, Lang::En, Lang::De, Lang::Pl, Lang::Cs, Lang::Fr, Lang::Pt];
+    pub const Es: Lang = Lang("ESP");
+    pub const En: Lang = Lang("ENG");
+    pub const De: Lang = Lang("DEU");
+    pub const Pl: Lang = Lang("POL");
+    pub const Cs: Lang = Lang("CZE");
+    pub const Fr: Lang = Lang("FRA");
+    pub const Pt: Lang = Lang("POR");
+    /// The languages the launcher is translated into by itself.
+    pub const BUILTIN: [Lang; 7] = [Lang::Es, Lang::En, Lang::De, Lang::Pl, Lang::Cs, Lang::Fr, Lang::Pt];
+
+    /// The three-letter code, in capitals.
+    pub fn code(self) -> &'static str {
+        self.0
+    }
+
+    /// The language with that code. The two-letter codes of older settings files (`es`, `de`...) are understood too.
+    pub fn from_code(s: &str) -> Lang {
+        let s = s.trim().to_uppercase();
+        let legacy = match s.as_str() {
+            "ES" => "ESP",
+            "EN" => "ENG",
+            "DE" => "DEU",
+            "PL" => "POL",
+            "CS" => "CZE",
+            "FR" => "FRA",
+            "PT" => "POR",
+            other => other,
+        };
+        if legacy.is_empty() {
+            return Lang::Es;
+        }
+        Lang::BUILTIN.into_iter().find(|l| l.0 == legacy).unwrap_or_else(|| Lang(intern(legacy)))
+    }
 
     /// Name of the language in that language.
     pub fn name(self) -> &'static str {
-        match self {
-            Lang::Es => "Español",
-            Lang::En => "English",
-            Lang::De => "Deutsch",
-            Lang::Pl => "Polski",
-            Lang::Cs => "Čeština",
-            Lang::Fr => "Français",
-            Lang::Pt => "Português",
+        match self.0 {
+            "ESP" => "Español",
+            "ENG" => "English",
+            "DEU" => "Deutsch",
+            "POL" => "Polski",
+            "CZE" => "Čeština",
+            "FRA" => "Français",
+            "POR" => "Português",
+            "HUN" => "Magyar",
+            "SRB" => "Srpski",
+            "RUH" => "Ruhrdeutsch",
+            code => external_name(code).unwrap_or(code),
         }
     }
 
-    pub fn code(self) -> &'static str {
-        match self {
-            Lang::Es => "es",
-            Lang::En => "en",
-            Lang::De => "de",
-            Lang::Pl => "pl",
-            Lang::Cs => "cs",
-            Lang::Fr => "fr",
-            Lang::Pt => "pt",
-        }
-    }
-
-    pub fn from_code(s: &str) -> Lang {
-        Lang::ALL.into_iter().find(|l| l.code() == s).unwrap_or(Lang::Es)
-    }
-
-    fn index(self) -> Option<usize> {
-        match self {
-            Lang::Es => None,
-            Lang::En => Some(0),
-            Lang::De => Some(1),
-            Lang::Pl => Some(2),
-            Lang::Cs => Some(3),
-            Lang::Fr => Some(4),
-            Lang::Pt => Some(5),
+    /// Column of the built-in table; `None` for Spanish, whose text is the key itself. A language without a column uses English.
+    fn column(self) -> Option<usize> {
+        match self.0 {
+            "ESP" => None,
+            "ENG" => Some(0),
+            "DEU" => Some(1),
+            "POL" => Some(2),
+            "CZE" => Some(3),
+            "FRA" => Some(4),
+            "POR" => Some(5),
+            _ => Some(0),
         }
     }
 }
 
-static CURRENT: AtomicU8 = AtomicU8::new(0);
+/// Codes seen so far, kept for the whole run so `Lang` can stay a cheap copyable value.
+fn intern(code: &str) -> &'static str {
+    static CODES: Mutex<Vec<&'static str>> = Mutex::new(Vec::new());
+    let mut codes = CODES.lock().unwrap();
+    if let Some(c) = codes.iter().find(|c| **c == code) {
+        return c;
+    }
+    let leaked: &'static str = Box::leak(code.to_string().into_boxed_str());
+    codes.push(leaked);
+    leaked
+}
+
+type Texts = HashMap<&'static str, &'static str>;
+
+struct Current {
+    lang: Lang,
+    /// Texts read from the language's file in the `lang` folder; they win over the built-in ones.
+    external: Texts,
+}
+
+fn current() -> &'static RwLock<Current> {
+    static C: OnceLock<RwLock<Current>> = OnceLock::new();
+    C.get_or_init(|| RwLock::new(Current { lang: Lang::Es, external: Texts::new() }))
+}
+
+fn names() -> &'static Mutex<HashMap<String, &'static str>> {
+    static N: OnceLock<Mutex<HashMap<String, &'static str>>> = OnceLock::new();
+    N.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn external_name(code: &str) -> Option<&'static str> {
+    if let Some(n) = names().lock().unwrap().get(code) {
+        return Some(n);
+    }
+    let (_, name) = read_external(code);
+    let name: &'static str = Box::leak(name?.into_boxed_str());
+    names().lock().unwrap().insert(code.to_string(), name);
+    Some(name)
+}
+
+/// Where the translation files are kept: `%APPDATA%\OMSI2-Launcher\lang`.
+pub fn lang_dir() -> PathBuf {
+    let base = std::env::var_os("APPDATA").map(PathBuf::from).unwrap_or_else(std::env::temp_dir);
+    base.join("OMSI2-Launcher").join("lang")
+}
+
+fn unescape(s: &str) -> String {
+    let mut out = String::new();
+    let mut chars = s.chars();
+    while let Some(c) = chars.next() {
+        if c == '\\' {
+            match chars.next() {
+                Some('n') => out.push('\n'),
+                Some(other) => out.push(other),
+                None => out.push('\\'),
+            }
+        } else {
+            out.push(c);
+        }
+    }
+    out
+}
+
+fn escape(s: &str) -> String {
+    s.replace('\\', "\\\\").replace('\n', "\\n")
+}
+
+/// Reads `<CODE>.txt`: `@name=` gives the language's own name, then pairs of lines, `> original (Spanish)` and `= translation`.
+fn read_external(code: &str) -> (Texts, Option<String>) {
+    let mut texts = Texts::new();
+    let mut name = None;
+    let Ok(bytes) = std::fs::read(lang_dir().join(format!("{code}.txt"))) else { return (texts, name) };
+    let text = String::from_utf8_lossy(bytes.strip_prefix(&[0xEF, 0xBB, 0xBF]).unwrap_or(&bytes)).into_owned();
+    let mut pending: Option<&'static str> = None;
+    for line in text.lines() {
+        let line = line.trim_end_matches('\r');
+        if let Some(n) = line.strip_prefix("@name=") {
+            name = Some(n.trim().to_string());
+        } else if let Some(k) = line.strip_prefix("> ") {
+            // only keys the launcher really has are kept, so a mistyped one cannot hide anything
+            pending = ROWS.iter().find(|(key, _)| *key == unescape(k)).map(|(key, _)| *key);
+        } else if let Some(v) = line.strip_prefix("= ") {
+            if let (Some(k), false) = (pending.take(), v.trim().is_empty()) {
+                texts.insert(k, Box::leak(unescape(v).into_boxed_str()) as &'static str);
+            }
+        }
+    }
+    (texts, name)
+}
 
 pub fn set_lang(l: Lang) {
-    CURRENT.store(Lang::ALL.iter().position(|&x| x == l).unwrap_or(0) as u8, Ordering::Relaxed);
+    let (external, _) = read_external(l.code());
+    *current().write().unwrap() = Current { lang: l, external };
 }
 
 pub fn lang() -> Lang {
-    Lang::ALL[(CURRENT.load(Ordering::Relaxed) as usize).min(6)]
+    current().read().unwrap().lang
 }
 
 type Row = (&'static str, [&'static str; 6]);
@@ -84,10 +192,72 @@ pub fn has(key: &str) -> bool {
 
 /// The text for `key` in the current language.
 pub fn tr(key: &str) -> &str {
-    match lang().index().and_then(|i| table().get(key).map(|r| r[i])) {
+    let cur = current().read().unwrap();
+    if let Some(s) = cur.external.get(key) {
+        return *s;
+    }
+    match cur.lang.column().and_then(|i| table().get(key).map(|r| r[i])) {
         Some(s) => s,
         None => key,
     }
+}
+
+/// The codes of the languages found in OMSI's `Languages` folder (a `<CODE>_basic.olf` file each), in alphabetical order.
+pub fn omsi_languages(omsi: &Path) -> Vec<Lang> {
+    let mut codes: Vec<String> = std::fs::read_dir(omsi.join("Languages"))
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter_map(|e| {
+            let name = e.file_name().to_string_lossy().to_uppercase();
+            let code = name.strip_suffix("_BASIC.OLF")?;
+            (code.len() == 3 && code.chars().all(|c| c.is_ascii_alphabetic())).then(|| code.to_string())
+        })
+        .collect();
+    codes.sort();
+    codes.dedup();
+    codes.iter().map(|c| Lang::from_code(c)).collect()
+}
+
+/// Every language the launcher can be shown in: its built-in ones, those OMSI has and those with a file in the `lang` folder.
+pub fn available(omsi: Option<&Path>) -> Vec<Lang> {
+    let mut all: Vec<Lang> = Lang::BUILTIN.to_vec();
+    if let Some(o) = omsi {
+        all.extend(omsi_languages(o));
+    }
+    if let Ok(rd) = std::fs::read_dir(lang_dir()) {
+        for e in rd.flatten() {
+            let file = e.file_name().to_string_lossy().to_uppercase();
+            if let Some(code) = file.strip_suffix(".TXT") {
+                if code.len() == 3 && code.chars().all(|c| c.is_ascii_alphabetic()) {
+                    all.push(Lang::from_code(code));
+                }
+            }
+        }
+    }
+    all.sort_by_key(|l| l.name().to_lowercase());
+    all.dedup();
+    all
+}
+
+/// Writes `lang\TEMPLATE.txt`: every text of the launcher with its English version, ready to be translated. Saved under the code of
+/// the new language (for example `CHN.txt`), the language shows up in the launcher's list.
+pub fn write_template() -> Result<PathBuf, String> {
+    let dir = lang_dir();
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let mut out = String::from(
+        "# Translation of the OMSI 2 Launcher. Translate the lines that start with \"= \" (they hold the English text now).\n\
+         # Save the file as <CODE>.txt, with the same three letters OMSI uses for the language (CHN.txt for Languages\\CHN_basic.olf),\n\
+         # in UTF-8. Lines that start with \"> \" are the original keys: do not change them. Keep every {} where it is.\n\
+         # A line left as it is, or removed, simply shows the English text.\n\
+         @name=The name of the language, written in that language\n\n",
+    );
+    for (key, tr) in ROWS {
+        out.push_str(&format!("> {}\n= {}\n\n", escape(key), escape(tr[0])));
+    }
+    let path = dir.join("TEMPLATE.txt");
+    std::fs::write(&path, out).map_err(|e| e.to_string())?;
+    Ok(path)
 }
 
 /// `tr` for a template: each `{}` is replaced, in order, by the next argument.
@@ -284,6 +454,16 @@ const ROWS: &[Row] = &[
         "Instala o plugin nas definições do launcher para poder iniciar o OMSI 2.",
     ]),
     ("Aparecer en:", ["Appear at:", "Start bei:", "Start w:", "Začít u:", "Apparaître à :", "Iniciar em:"]),
+    ("Crear plantilla de traducción", ["Create translation template", "Übersetzungsvorlage erstellen", "Utwórz szablon tłumaczenia", "Vytvořit šablonu překladu", "Créer un modèle de traduction", "Criar modelo de tradução"]),
+    ("Abrir carpeta de idiomas", ["Open languages folder", "Sprachordner öffnen", "Otwórz folder języków", "Otevřít složku jazyků", "Ouvrir le dossier des langues", "Abrir pasta de idiomas"]),
+    ("Los idiomas de la carpeta Languages de OMSI aparecen solos; para sus textos del launcher añade un archivo <CÓDIGO>.txt en la carpeta de idiomas.", [
+        "The languages in OMSI's Languages folder appear by themselves; for the launcher's own texts add a <CODE>.txt file to the languages folder.",
+        "Die Sprachen im Languages-Ordner von OMSI erscheinen von selbst; für die Texte des Launchers eine Datei <CODE>.txt in den Sprachordner legen.",
+        "Języki z folderu Languages OMSI pojawiają się same; dla tekstów launchera dodaj plik <KOD>.txt do folderu języków.",
+        "Jazyky ze složky Languages OMSI se objeví samy; pro texty launcheru přidej soubor <KÓD>.txt do složky jazyků.",
+        "Les langues du dossier Languages d'OMSI apparaissent d'elles-mêmes ; pour les textes du launcher, ajoutez un fichier <CODE>.txt au dossier des langues.",
+        "Os idiomas da pasta Languages do OMSI aparecem sozinhos; para os textos do launcher adiciona um ficheiro <CÓDIGO>.txt à pasta de idiomas.",
+    ]),
     ("Seleccionar hora y fecha...", ["Select time and date...", "Uhrzeit und Datum wählen...", "Wybierz godzinę i datę...", "Vyberte čas a datum...", "Choisir l'heure et la date...", "Escolher hora e data..."]),
     ("Fecha:", ["Date:", "Datum:", "Data:", "Datum:", "Date :", "Data:"]),
     ("Hora actual", ["Current time", "Aktuelle Zeit", "Obecna godzina", "Aktuální čas", "Heure actuelle", "Hora atual"]),
@@ -876,5 +1056,35 @@ mod tests {
         assert_eq!(trf("Carpeta: {}", &["C:\\x"]), "Ordner: C:\\x");
         set_lang(Lang::Es);
         assert_eq!(trf("Carpeta: {}", &["a"]), "Carpeta: a");
+    }
+}
+
+#[cfg(test)]
+mod external_tests {
+    use super::*;
+
+    #[test]
+    fn a_language_file_adds_a_language() {
+        let dir = std::env::temp_dir().join(format!("omsi2l-lang-{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or(0)));
+        unsafe { std::env::set_var("APPDATA", &dir) };
+        let lang_dir = lang_dir();
+        std::fs::create_dir_all(&lang_dir).unwrap();
+        std::fs::write(lang_dir.join("CHN.txt"), "@name=中文\n\n> Listo.\n= 就绪。\n\n> Carpeta: {}\n= 文件夹：{}\n").unwrap();
+        // the template lists every text with its English version and can be read back as a language
+        let template = write_template().unwrap();
+        assert!(std::fs::read_to_string(&template).unwrap().contains("> Listo.\n= Ready."));
+        assert!(available(None).contains(&Lang::from_code("chn")));
+        let chn = Lang::from_code("CHN");
+        assert_eq!(chn.name(), "中文");
+        set_lang(chn);
+        assert_eq!(tr("Listo."), "就绪。");
+        assert_eq!(trf("Carpeta: {}", &["C:\\x"]), "文件夹：C:\\x");
+        // a text the file does not have shows in English, not Spanish
+        assert_eq!(tr("Cerrar"), "Close");
+        // the language of an older settings file
+        assert_eq!(Lang::from_code("es"), Lang::Es);
+        assert_eq!(Lang::from_code("PT"), Lang::Pt);
+        set_lang(Lang::Es);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

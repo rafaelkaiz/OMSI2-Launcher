@@ -3,7 +3,7 @@
 //! launcher language is one OMSI has; otherwise from the launcher's translations.
 
 use crate::cfg::Options;
-use crate::i18n::{self, tr, Lang};
+use crate::i18n::{self, tr};
 use crate::theme::pal;
 use eframe::egui::{self, vec2, Color32, Rect, RichText, Ui};
 use std::collections::HashMap;
@@ -34,7 +34,7 @@ impl Canvas<'_> {
 
     /// OMSI's own text for `key` when the launcher language is one OMSI has; the launcher's translation of `fallback` otherwise.
     pub fn t(&self, key: &str, fallback: &str) -> String {
-        let has_omsi = matches!(i18n::lang(), Lang::Es | Lang::En | Lang::De | Lang::Pl | Lang::Fr);
+        let has_omsi = crate::olf::omsi_code(i18n::lang()) == i18n::lang().code();
         let own = !fallback.is_empty() && i18n::has(fallback);
         match self.omsi.get(key).filter(|s| !s.is_empty()) {
             // OMSI's own wording; for Czech and Portuguese (which OMSI does not have) only when the launcher has no translation
@@ -189,7 +189,6 @@ impl Canvas<'_> {
     }
 }
 
-const LANGUAGES: Choices = &[("DEU", "DEU"), ("ENG", "ENG"), ("ESP", "ESP"), ("FRA", "FRA"), ("HUN", "HUN"), ("POL", "POL"), ("RUH", "RUH"), ("SRB", "SRB")];
 const TICKETS: Choices = &[("0", "Ninguno"), ("1", "Fácil"), ("2", "Avanzado")];
 const REFLEXIONS: Choices = &[("none", "Ninguno"), ("economy", "Económico"), ("full", "Completo")];
 const WEAR: Choices = &[
@@ -219,7 +218,7 @@ pub fn draw(cv: &Canvas, ui: &mut Ui, o: &mut Options, tab: usize) -> bool {
 fn general(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     let mut c = false;
     cv.label(ui, 21.0, 19.0, 180.0, &cv.t("DG_Options_Label41", "Idioma"));
-    c |= cv.combo(ui, o, 206.0, 11.0, 111.0, "language", "language", "GENERAL", LANGUAGES, false);
+    c |= cv.combo(ui, o, 206.0, 11.0, 111.0, "language", "language", "GENERAL", crate::olf::option_choices(), false);
     cv.label(ui, 21.0, 173.0, 130.0, &cv.t("DG_Options_Label70", "Venta de billetes"));
     c |= cv.combo(ui, o, 157.0, 162.0, 112.0, "ticketselling", "ticketselling", "GENERAL", TICKETS, true);
     cv.label(ui, 21.0, 202.0, 135.0, &cv.t("DG_Options_Label42", "Vincular emisora de radio"));
@@ -276,9 +275,9 @@ fn graphics(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     cv.label(ui, 21.0, 120.0, 250.0, &cv.t("DG_Options_Label15", "Distancia máxima de visibilidad de objetos"));
     c |= cv.slider_f(ui, o, 122.0, 125.0, 150.0, "performance_maxObjDist", "GRAPHICS", (20.0, 5000.0), 3, Some((21.0, 143.0, &|v: f64| format!("{v:.0}"))));
     cv.label(ui, 21.0, 177.0, 260.0, &cv.t("DG_Options_Label19", "Tamaño mínimo de objeto (% tamaño de pantalla)"));
-    percent(cv, ui, o, 122.0, 182.0, "performance_minObjSize", 10.0, &mut c); // OMSI: half way is 5.00 %
+    percent(cv, ui, o, 122.0, 182.0, "performance_minObjSize", 10.0, true, &mut c); // OMSI: 10 % at the left end, 0 % at the right end
     cv.label(ui, 21.0, 232.0, 250.0, &cv.t("DG_Options_Label27", "… para reflexiones"));
-    percent(cv, ui, o, 122.0, 237.0, "performance_minObjSizeRefl", 50.0, &mut c);
+    percent(cv, ui, o, 122.0, 237.0, "performance_minObjSizeRefl", 50.0, false, &mut c);
     cv.label(ui, 21.0, 284.0, 160.0, &cv.t("DG_Options_Label1", "Reflexiones en tiempo real"));
     c |= cv.combo(ui, o, 181.0, 274.0, 88.0, "refl", "performance_realreflexions", "GRAPHICS", REFLEXIONS, true);
 
@@ -320,10 +319,11 @@ fn graphics(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     c
 }
 
-/// A "% of screen size" slider: the file holds a fraction (0.046), OMSI shows 4.60 %.
-fn percent(cv: &Canvas, ui: &mut Ui, o: &mut Options, x: f32, y: f32, key: &str, max: f64, changed: &mut bool) {
+/// A "% of screen size" slider: the file holds a fraction (0.046), OMSI shows 4.60 %. The minimum object size one runs backwards in OMSI
+/// (its biggest value is at the left end), so `reversed` flips it.
+fn percent(cv: &Canvas, ui: &mut Ui, o: &mut Options, x: f32, y: f32, key: &str, max: f64, reversed: bool, changed: &mut bool) {
     let mut v: f64 = o.get(key, 0).and_then(|s| s.parse::<f64>().ok()).unwrap_or(0.0) * 100.0;
-    if cv.put(ui, cv.rect(x, y, 150.0, 20.0), egui::Slider::new(&mut v, 0.0..=max).show_value(false)).changed() {
+    if cv.put(ui, cv.rect(x, y, 150.0, 20.0), egui::Slider::new(&mut v, if reversed { max..=0.0 } else { 0.0..=max }).show_value(false)).changed() {
         o.set(key, "GRAPHICS", 0, &format!("{:.3}", v / 100.0));
         *changed = true;
     }
@@ -442,6 +442,7 @@ fn traffic(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::i18n::Lang;
 
     /// Draws every tab in every launcher language on a real copy of the user's options, without a window: it must not panic and a
     /// plain draw must not report changes.
@@ -451,7 +452,7 @@ mod tests {
         let Some(mut options) = Options::load(omsi) else { return };
         let before = options.to_bytes();
         let ctx = egui::Context::default();
-        for lang in Lang::ALL {
+        for lang in Lang::BUILTIN {
             i18n::set_lang(lang);
             let labels = crate::olf::load(omsi, lang);
             for tab in 0..6 {

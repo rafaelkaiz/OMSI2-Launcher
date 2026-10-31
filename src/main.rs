@@ -173,6 +173,9 @@ impl App {
             }
         });
         let omsi = omsi::find_omsi_dir(settings.omsi_dir.clone()).filter(|_| std::env::var("OMSI2_OPEN").as_deref() != Ok("missing")); // dev: OMSI2_OPEN=missing shows the "where is OMSI" screen
+        if let Some(d) = &omsi {
+            olf::init(d);
+        }
         if let (Some(d), true) = (&omsi, settings.remove_closecheck) {
             omsi::remove_closecheck(d);
         }
@@ -571,6 +574,7 @@ impl App {
         let mut changed = false;
         let mut plugin_msg: Option<String> = None;
         let mut open_url: Option<String> = None;
+        let mut lang_msg: Option<String> = None;
         // one rounded card per topic, each with its title
         let card = |ui: &mut egui::Ui, title: &str, show: bool, add: &mut dyn FnMut(&mut egui::Ui)| {
             if !show {
@@ -611,7 +615,7 @@ impl App {
                     ui.horizontal(|ui| {
                         ui.label(tr("Idioma del launcher"));
                         egui::ComboBox::from_id_salt("launcher_lang").selected_text(self.settings.lang.name()).show_ui(ui, |ui| {
-                            for l in i18n::Lang::ALL {
+                            for l in i18n::available(self.omsi.as_deref()) {
                                 if ui.selectable_value(&mut self.settings.lang, l, l.name()).changed() {
                                     i18n::set_lang(l);
                                     changed = true;
@@ -619,6 +623,22 @@ impl App {
                             }
                         });
                     });
+                    ui.horizontal(|ui| {
+                        ui.add_space(4.0);
+                        // another language: its texts go in a file of the "lang" folder (the template has every text to translate)
+                        if ui.small_button(tr("Crear plantilla de traducción")).clicked() {
+                            match i18n::write_template() {
+                                Ok(p) => omsi::open_folder(p.parent().unwrap_or(std::path::Path::new("."))),
+                                Err(e) => lang_msg = Some(e),
+                            }
+                        }
+                        if ui.small_button(tr("Abrir carpeta de idiomas")).clicked() {
+                            let dir = i18n::lang_dir();
+                            let _ = std::fs::create_dir_all(&dir);
+                            omsi::open_folder(&dir);
+                        }
+                    });
+                    ui.label(RichText::new(tr("Los idiomas de la carpeta Languages de OMSI aparecen solos; para sus textos del launcher añade un archivo <CÓDIGO>.txt en la carpeta de idiomas.")).italics().size(12.0));
                     ui.horizontal(|ui| {
                         ui.label(tr("Tema"));
                         for t in theme::Theme::ALL {
@@ -727,6 +747,9 @@ impl App {
         self.settings_open = open;
         if let Some(u) = open_url {
             omsi::open_folder(std::path::Path::new(&u));
+        }
+        if let Some(m) = lang_msg {
+            self.set_status(&m);
         }
         if let Some(m) = plugin_msg {
             log::line(&m);

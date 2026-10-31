@@ -4,15 +4,39 @@
 use crate::i18n::Lang;
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::OnceLock;
 
-/// OMSI's language code for a launcher language; OMSI has no Czech or Portuguese texts, so those use English.
+/// The languages OMSI has (`Languages\<CODE>_basic.olf`), found once at start with `init`.
+static OMSI_LANGS: OnceLock<Vec<Lang>> = OnceLock::new();
+
+pub fn init(omsi: &Path) {
+    let _ = OMSI_LANGS.set(crate::i18n::omsi_languages(omsi));
+}
+
+/// The languages OMSI has, as the code pairs a drop-down list needs (the options window's language box).
+pub fn option_choices() -> &'static [(&'static str, &'static str)] {
+    static C: OnceLock<Vec<(&'static str, &'static str)>> = OnceLock::new();
+    C.get_or_init(|| match OMSI_LANGS.get() {
+        Some(l) if !l.is_empty() => l.iter().map(|l| (l.code(), l.code())).collect(),
+        _ => vec![("DEU", "DEU"), ("ENG", "ENG"), ("ESP", "ESP"), ("FRA", "FRA"), ("HUN", "HUN"), ("POL", "POL"), ("RUH", "RUH"), ("SRB", "SRB")],
+    })
+}
+
+/// OMSI's language code for a launcher language: its own when OMSI has texts in it, English otherwise (OMSI has no Czech or
+/// Portuguese, for instance).
 pub fn omsi_code(l: Lang) -> &'static str {
-    match l {
-        Lang::Es => "ESP",
-        Lang::De => "DEU",
-        Lang::Pl => "POL",
-        Lang::Fr => "FRA",
-        Lang::En | Lang::Cs | Lang::Pt => "ENG",
+    match OMSI_LANGS.get() {
+        Some(known) if !known.is_empty() => {
+            if known.contains(&l) {
+                l.code()
+            } else {
+                "ENG"
+            }
+        }
+        _ => match l {
+            Lang::Es | Lang::De | Lang::Pl | Lang::Fr => l.code(),
+            _ => "ENG",
+        },
     }
 }
 
