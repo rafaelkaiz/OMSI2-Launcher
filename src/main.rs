@@ -1368,8 +1368,9 @@ impl App {
     fn time_dialog_window(&mut self, ctx: &egui::Context) {
         let Some(mut dlg) = self.time_dialog.clone() else { return };
         let (mut accept, mut cancel) = (false, false);
+        let mut open = true;
         let two = |v: f64, _: std::ops::RangeInclusive<usize>| format!("{:02}", v as u32);
-        egui::Window::new(tr("Seleccionar hora y fecha...")).id(egui::Id::unique("win-time")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).collapsible(false).resizable(false).show(ctx, |ui| {
+        egui::Window::new(tr("Seleccionar hora y fecha...")).id(egui::Id::unique("win-time")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.set_width(430.0);
             ui.horizontal(|ui| {
                 ui.label(tr("Hora:"));
@@ -1445,6 +1446,9 @@ impl App {
                 }
             });
         });
+        if !open {
+            cancel = true; // the cross of the window is the same as Cancel
+        }
         if accept {
             self.clock = (dlg.time.0, dlg.time.1);
             self.sec = dlg.time.2;
