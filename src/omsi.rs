@@ -402,10 +402,10 @@ pub fn version(omsi: &Path) -> Option<String> {
 #[derive(Clone, Copy, PartialEq)]
 pub enum TimeChoice {
     Situation,
-    /// Day, month, year, hour, minute.
-    Custom(u32, u32, u32, u32, u32),
-    /// Only the time of day (hour, minute); OMSI keeps its date.
-    TimeOnly(u32, u32),
+    /// Day, month, year, hour, minute, second.
+    Custom(u32, u32, u32, u32, u32, u32),
+    /// Only the time of day (hour, minute, second); OMSI keeps its date.
+    TimeOnly(u32, u32, u32),
 }
 
 fn rect_of(h: HWND) -> RECT {
@@ -454,13 +454,13 @@ fn set_time(form: HWND, time: &TimeChoice, plugin: &mut bool, status: &impl Fn(&
         return Err(tr("El diálogo de fecha y hora de OMSI no tiene el aspecto esperado.").into());
     }
     match *time {
-        TimeChoice::Custom(d, m, y, h, mi) => {
-            for (e, v) in [(edits[5], y), (edits[4], m), (edits[3], d), (edits[0], h), (edits[1], mi), (edits[2], 0)] {
+        TimeChoice::Custom(d, m, y, h, mi, s) => {
+            for (e, v) in [(edits[5], y), (edits[4], m), (edits[3], d), (edits[0], h), (edits[1], mi), (edits[2], s)] {
                 set_text(e, &v.to_string());
             }
         }
-        TimeChoice::TimeOnly(h, mi) => {
-            for (e, v) in [(edits[0], h), (edits[1], mi), (edits[2], 0)] {
+        TimeChoice::TimeOnly(h, mi, s) => {
+            for (e, v) in [(edits[0], h), (edits[1], mi), (edits[2], s)] {
                 set_text(e, &v.to_string());
             }
         }
@@ -651,4 +651,12 @@ mod spawn_name_tests {
         assert_eq!(entry_points(&dir, &map), ["[25 DIM] Conleau", "Auray [200][201]"]);
         let _ = std::fs::remove_dir_all(&dir);
     }
+}
+
+/// The local date and time of this computer: (year, month, day, hour, minute, second).
+pub fn local_now() -> (u32, u32, u32, u32, u32, u32) {
+    use windows_sys::Win32::System::SystemInformation::GetLocalTime;
+    let mut t = unsafe { std::mem::zeroed() };
+    unsafe { GetLocalTime(&mut t) };
+    (t.wYear as u32, t.wMonth as u32, t.wDay as u32, t.wHour as u32, t.wMinute as u32, t.wSecond as u32)
 }

@@ -71,16 +71,6 @@ enum TimeMode {
     Custom,
 }
 
-/// What the "Elegir fecha y hora" mode sends to OMSI: a time of day, or an exact date and time.
-#[derive(Clone, Copy, PartialEq)]
-enum Preset {
-    Manual,
-    Dawn,
-    Day,
-    Dusk,
-    Night,
-}
-
 struct App {
     settings: settings::Settings,
     settings_open: bool,
@@ -89,7 +79,10 @@ struct App {
     tut_sel: usize,
     tut_entries: Vec<tutorials::Entry>,
     time_mode: TimeMode,
-    preset: Preset,
+    /// The date in the "Elegir fecha y hora" dialog was chosen by the user (otherwise OMSI keeps the date of the situation).
+    date_touched: bool,
+    sec: u32,
+    time_dialog: Option<TimeDialog>,
     date: (u32, u32, u32),
     clock: (u32, u32),
     omsi: Option<PathBuf>,
@@ -208,7 +201,9 @@ impl App {
         options_ui.set_tab(std::env::var("OMSI2_TAB").ok().and_then(|t| t.parse().ok()).unwrap_or(0));
         Self {
             time_mode: if use_now { TimeMode::Now } else { TimeMode::Situation },
-            preset: Preset::Manual,
+            date_touched: false,
+            sec: 0,
+            time_dialog: if std::env::var("OMSI2_OPEN").as_deref() == Ok("time") { Some(TimeDialog { time: (7, 14, 14), date: (7, 1, 2014), date_touched: true }) } else { None }, // dev shortcut for screenshots
             date: (d, m, y as u32),
             clock: (8, 0),
             version: omsi.as_deref().and_then(omsi::version).unwrap_or_default(),
@@ -286,9 +281,9 @@ impl App {
             }
         }
         let (driver, windowed) = (self.drivers.get(self.driver).map(|d| d.name.clone()), self.settings.windowed);
-        let time = match (self.time_mode, self.preset) {
-            (TimeMode::Custom, Preset::Manual) => omsi::TimeChoice::Custom(self.date.0, self.date.1, self.date.2, self.clock.0, self.clock.1),
-            (TimeMode::Custom, _) => omsi::TimeChoice::TimeOnly(self.clock.0, self.clock.1),
+        let time = match (self.time_mode, self.date_touched) {
+            (TimeMode::Custom, true) => omsi::TimeChoice::Custom(self.date.0, self.date.1, self.date.2, self.clock.0, self.clock.1, self.sec),
+            (TimeMode::Custom, false) => omsi::TimeChoice::TimeOnly(self.clock.0, self.clock.1, self.sec),
             _ => omsi::TimeChoice::Situation,
         };
         let situation = self.sit_sel.and_then(|i| self.situations.get(i)).map(|s| (s.name.clone(), s.occurrence));
@@ -881,31 +876,17 @@ impl App {
                 });
             }
             TimeMode::Custom => {
-                ui.horizontal_wrapped(|ui| {
+                // like OMSI: a summary and a button that opens the "Seleccionar hora y fecha" window
+                ui.horizontal(|ui| {
                     ui.add_space(24.0);
-                    for (p, l) in [(Preset::Manual, tr("Manual")), (Preset::Dawn, tr("Mañana")), (Preset::Day, tr("Día")), (Preset::Dusk, tr("Tarde")), (Preset::Night, tr("Noche"))] {
-                        // Picking a time of day fills in its usual hour, which can still be adjusted below.
-                        if ui.selectable_value(&mut self.preset, p, l).clicked() {
-                            if let Some(t) = preset_time(p) {
-                                self.clock = t;
-                            }
-                        }
-                    }
+                    let date = if self.date_touched { format!("{:02}/{:02}/{}", self.date.0, self.date.1, self.date.2) } else { tr("la de la situación").to_string() };
+                    ui.label(format!("{} {}   {} {:02}:{:02}:{:02}", tr("Fecha:"), date, tr("Hora:"), self.clock.0, self.clock.1, self.sec));
                 });
                 ui.horizontal(|ui| {
                     ui.add_space(24.0);
-                    if self.preset == Preset::Manual {
-                        ui.add(egui::DragValue::new(&mut self.date.0).range(1..=31));
-                        ui.label("/");
-                        ui.add(egui::DragValue::new(&mut self.date.1).range(1..=12));
-                        ui.label("/");
-                        ui.add(egui::DragValue::new(&mut self.date.2).range(1900..=2100));
-                        ui.add_space(12.0);
+                    if ui.button(tr("Cambiar fecha y hora...")).clicked() {
+                        self.time_dialog = Some(TimeDialog { time: (self.clock.0, self.clock.1, self.sec), date: self.date, date_touched: self.date_touched });
                     }
-                    ui.label(tr("Hora:"));
-                    ui.add(egui::DragValue::new(&mut self.clock.0).range(0..=23).custom_formatter(|v, _| format!("{:02}", v as u32)));
-                    ui.label(":");
-                    ui.add(egui::DragValue::new(&mut self.clock.1).range(0..=59).custom_formatter(|v, _| format!("{:02}", v as u32)));
                 });
             }
             TimeMode::Situation => {}
@@ -952,8 +933,8 @@ impl App {
         let map_dir = omsi.join("maps").join(&map.folder);
         let situation = self.sit_sel.and_then(|i| self.situations.get(i)).filter(|_| self.mode == LoadMode::SavedSituation);
         let saved = || chrono::situation_date(&map_dir.join("laststn.osn"));
-        let date = match (self.time_mode, self.preset, situation) {
-            (TimeMode::Custom, Preset::Manual, _) => Some((self.date.2 as i64, self.date.1, self.date.0)),
+        let date = match (self.time_mode, self.date_touched, situation) {
+            (TimeMode::Custom, true, _) => Some((self.date.2 as i64, self.date.1, self.date.0)),
             (TimeMode::Now, _, _) => Some(cfg::today()),
             (_, _, Some(s)) => s.date.or_else(saved),
             _ => saved(),
@@ -1314,6 +1295,7 @@ impl eframe::App for App {
         self.settings_window(&ctx);
         self.tutorials_window(&ctx, can_start);
         self.staff_window(&ctx, running);
+        self.time_dialog_window(&ctx);
         let can_write = !running && self.omsi.is_some();
         if let Some(msg) = options_ui::show(&ctx, &mut self.options_ui, &mut self.options, can_write, self.omsi.as_deref()) {
             self.set_status(&msg);
@@ -1345,13 +1327,119 @@ fn main() -> eframe::Result {
     eframe::run_native("OMSI 2 Launcher", options, Box::new(|cc| Ok(Box::new(App::new(cc)))))
 }
 
-/// The hour OMSI's own "Mañana / Día / Tarde / Noche" buttons set (measured from OMSI's date/time dialog).
-fn preset_time(p: Preset) -> Option<(u32, u32)> {
-    match p {
-        Preset::Manual => None,
-        Preset::Dawn => Some((7, 0)),
-        Preset::Day => Some((12, 0)),
-        Preset::Dusk => Some((17, 0)),
-        Preset::Night => Some((0, 0)),
+
+/// What is being edited in the "Seleccionar hora y fecha" window until the user presses Accept.
+#[derive(Clone)]
+struct TimeDialog {
+    time: (u32, u32, u32),
+    date: (u32, u32, u32),
+    date_touched: bool,
+}
+
+/// The hours OMSI's own "Día / Tarde / Noche / Mañana" buttons set (measured from OMSI's date/time dialog).
+const DAY_TIMES: [(&str, u32); 4] = [("Día", 12), ("Tarde", 17), ("Noche", 0), ("Mañana", 7)];
+
+impl App {
+    /// A window like OMSI's "Select time and date...": time with seconds, the four times of day, the date, its weekday and holidays.
+    fn time_dialog_window(&mut self, ctx: &egui::Context) {
+        let Some(mut dlg) = self.time_dialog.clone() else { return };
+        let (mut accept, mut cancel) = (false, false);
+        let two = |v: f64, _: std::ops::RangeInclusive<usize>| format!("{:02}", v as u32);
+        egui::Window::new(tr("Seleccionar hora y fecha...")).id(egui::Id::unique("win-time")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).collapsible(false).resizable(false).show(ctx, |ui| {
+            ui.set_width(430.0);
+            ui.horizontal(|ui| {
+                ui.label(tr("Hora:"));
+                ui.add(egui::DragValue::new(&mut dlg.time.0).range(0..=23).custom_formatter(two));
+                ui.label(":");
+                ui.add(egui::DragValue::new(&mut dlg.time.1).range(0..=59).custom_formatter(two));
+                ui.label(":");
+                ui.add(egui::DragValue::new(&mut dlg.time.2).range(0..=59).custom_formatter(two));
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button(tr("Hora actual")).clicked() {
+                        let (_, _, _, h, m, s) = omsi::local_now();
+                        dlg.time = (h, m, s);
+                    }
+                });
+            });
+            ui.horizontal(|ui| {
+                for (name, hour) in DAY_TIMES {
+                    if ui.button(tr(name)).clicked() {
+                        dlg.time = (hour, 0, 0);
+                    }
+                }
+            });
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.label(tr("Fecha:"));
+                let before = dlg.date;
+                ui.add(egui::DragValue::new(&mut dlg.date.0).range(1..=31).custom_formatter(|v, _| format!("{}", v as u32)));
+                ui.label("/");
+                ui.add(egui::DragValue::new(&mut dlg.date.1).range(1..=12).custom_formatter(|v, _| format!("{}", v as u32)));
+                ui.label("/");
+                ui.add(egui::DragValue::new(&mut dlg.date.2).range(1900..=2100));
+                if dlg.date != before {
+                    dlg.date_touched = true;
+                }
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button(tr("Año actual")).clicked() {
+                        dlg.date.2 = omsi::local_now().0;
+                        dlg.date_touched = true;
+                    }
+                    if ui.button(tr("Fecha actual")).clicked() {
+                        let (y, m, d, ..) = omsi::local_now();
+                        dlg.date = (d, m, y);
+                        dlg.date_touched = true;
+                    }
+                });
+            });
+            // a date that does not exist (31 February) is brought back to the last day of that month
+            dlg.date.0 = dlg.date.0.min(days_in_month(dlg.date.2, dlg.date.1));
+            let day = (dlg.date.2 as i64, dlg.date.1, dlg.date.0);
+            let weekdays = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+            ui.horizontal(|ui| {
+                ui.label(tr("Día de la semana:"));
+                ui.label(RichText::new(tr(weekdays[chrono::weekday(day)])).strong());
+            });
+            let holidays = match (&self.omsi, self.maps.get(self.map)) {
+                (Some(o), Some(m)) => chrono::holidays(&o.join("maps").join(&m.folder), olf::omsi_code(self.settings.lang), day),
+                _ => vec![],
+            };
+            ui.horizontal(|ui| {
+                ui.label(tr("Festivos:"));
+                ui.label(RichText::new(holidays.join(", ")).strong());
+            });
+            if !dlg.date_touched {
+                ui.label(RichText::new(tr("Si no cambias la fecha, OMSI usa la de la situación del mapa.")).italics().size(12.0));
+            }
+            ui.add_space(6.0);
+            ui.horizontal(|ui| {
+                if big_button(ui, tr("Aceptar"), 120.0).clicked() {
+                    accept = true;
+                }
+                if big_button(ui, tr("Cancelar"), 120.0).clicked() {
+                    cancel = true;
+                }
+            });
+        });
+        if accept {
+            self.clock = (dlg.time.0, dlg.time.1);
+            self.sec = dlg.time.2;
+            self.date = dlg.date;
+            self.date_touched = dlg.date_touched;
+            self.time_dialog = None;
+        } else if cancel {
+            self.time_dialog = None;
+        } else {
+            self.time_dialog = Some(dlg);
+        }
+    }
+}
+
+fn days_in_month(year: u32, month: u32) -> u32 {
+    match month {
+        2 if (year % 4 == 0 && year % 100 != 0) || year % 400 == 0 => 29,
+        2 => 28,
+        4 | 6 | 9 | 11 => 30,
+        _ => 31,
     }
 }

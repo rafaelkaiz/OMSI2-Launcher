@@ -124,3 +124,88 @@ mod tests {
         assert_eq!(info(map, (1900, 1, 1), "ENG"), "");
     }
 }
+
+/// Day of the week of a date: 0 is Monday, 6 is Sunday.
+pub fn weekday((y, m, d): Date) -> usize {
+    // days since 1970-01-01 (a Thursday)
+    let (y2, m2) = if m <= 2 { (y - 1, m + 9) } else { (y, m - 3) };
+    let era = y2.div_euclid(400);
+    let yoe = y2 - era * 400;
+    let doy = (153 * m2 as i64 + 2) / 5 + d as i64 - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + doe - 719_468;
+    (days + 3).rem_euclid(7) as usize
+}
+
+fn number(s: &str) -> Option<i64> {
+    let s = s.trim();
+    (s.len() == 8 && s.bytes().all(|b| b.is_ascii_digit())).then(|| s.parse().ok()).flatten()
+}
+
+/// The names of the holidays of the map that fall on `date`, from `Holidays_<LANG>.txt` (or `Holidays.txt`) in the map folder:
+/// `[holiday]` is one day (date, name) and `[holidays]` a period (first day, last day, name). Read-only.
+pub fn holidays(map_dir: &Path, lang: &str, (y, m, d): Date) -> Vec<String> {
+    let text = [format!("Holidays_{lang}.txt"), "Holidays.txt".to_string()]
+        .iter()
+        .find_map(|n| std::fs::read(map_dir.join(n)).ok())
+        .map(|b| b.iter().map(|&c| c as char).collect::<String>())
+        .unwrap_or_default();
+    let day = y * 10_000 + m as i64 * 100 + d as i64;
+    let lines: Vec<&str> = text.lines().map(str::trim).collect();
+    let mut found: Vec<String> = Vec::new();
+    let mut i = 0;
+    while i < lines.len() {
+        let (span, has_range) = match lines[i].to_ascii_lowercase().as_str() {
+            "[holiday]" => (2, false),
+            "[holidays]" => (3, true),
+            _ => {
+                i += 1;
+                continue;
+            }
+        };
+        if i + span < lines.len() {
+            let first = number(lines[i + 1]);
+            let last = if has_range { number(lines[i + 2]) } else { first };
+            let name = lines[i + span];
+            if let (Some(a), Some(b)) = (first, last) {
+                // the file is read as Latin-1 text; names are shown as OMSI wrote them
+                if (a..=b).contains(&day) && !name.is_empty() && !found.iter().any(|n| n == name) {
+                    found.push(name.to_string());
+                }
+            }
+        }
+        i += span + 1;
+    }
+    found
+}
+
+#[cfg(test)]
+mod day_tests {
+    use super::*;
+
+    #[test]
+    fn weekdays_are_right() {
+        assert_eq!(weekday((2014, 1, 7)), 1); // a Tuesday, as OMSI's own dialog shows
+        assert_eq!(weekday((1970, 1, 1)), 3); // Thursday
+        assert_eq!(weekday((2000, 2, 29)), 1);
+        assert_eq!(weekday((2026, 10, 31)), 5);
+    }
+}
+
+#[cfg(test)]
+mod holiday_tests {
+    use super::*;
+
+    #[test]
+    fn holidays_of_a_map_are_read() {
+        let Some(omsi) = crate::omsi::find_omsi_dir(None) else { return };
+        let dir = omsi.join("maps").join("Grundorf");
+        if !dir.join("Holidays_ENG.txt").is_file() {
+            return;
+        }
+        assert!(holidays(&dir, "ENG", (1980, 4, 4)).iter().any(|n| n == "Good Friday"));
+        // a school holiday period covers every day of it
+        assert!(holidays(&dir, "ENG", (1980, 3, 30)).iter().any(|n| n == "Easter"));
+        assert!(holidays(&dir, "ENG", (1980, 6, 10)).is_empty());
+    }
+}
