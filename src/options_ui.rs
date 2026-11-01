@@ -104,9 +104,9 @@ pub fn show(ctx: &egui::Context, st: &mut State, options: &mut Option<Options>, 
     }
 
     let mut msg = None;
-    let mut open = st.open;
+    let open;
     let (mut accept, mut cancel) = (false, false);
-    egui::Window::new(tr("Opciones")).id(egui::Id::unique("win-options")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+    open = crate::free::window(ctx, "options", tr("Opciones"), egui::vec2(560.0, 520.0), |ui| {
         let Some(options) = options.as_mut() else {
             ui.label(tr("No se pudo leer options.cfg."));
             return;

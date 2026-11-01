@@ -3,6 +3,7 @@
 mod cfg;
 mod chrono;
 mod exepatch;
+mod free;
 mod app_icon;
 mod i18n;
 mod log;
@@ -367,11 +368,15 @@ impl App {
         }
         let labels = self.staff_labels.clone();
         let l = |k: &str| labels.get(k).cloned().unwrap_or_else(|| k.to_string());
-        let mut open = true;
+        let open;
         let mut close_staff = false;
         let names: Vec<String> = self.drivers.iter().map(|d| d.name.clone()).collect();
         let title = if labels.contains_key("DG_Driver") { l("DG_Driver") } else { tr("Expediente del personal").to_string() };
-        egui::Window::new(title).id(egui::Id::unique("win-staff")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+        let monitor_h = ctx.input(|i| i.viewport().monitor_size).map_or(1080.0, |m| m.y);
+        // the sheet is smaller when the screen is short
+        let k = ((monitor_h - 140.0 - 140.0) / paper::HEIGHT).clamp(0.55, 1.0);
+        let size = egui::vec2(paper::WIDTH * k + 30.0, paper::HEIGHT * k + 140.0);
+        open = free::window(ctx, "staff", &title, size, |ui| {
             ui.horizontal(|ui| {
                 ui.label(l("DG_Driver_Label1"));
                 pick::pick(ui, "staff-driver", 220.0, &names, &mut self.staff_sel);
@@ -398,8 +403,6 @@ impl App {
             ui.separator();
             let d = self.drivers[self.staff_sel].clone();
             let date = |s: &str| if s.len() == 8 { format!("{}/{}/{}", &s[6..8], &s[4..6], &s[0..4]) } else { s.to_string() };
-            // the sheet is smaller when the screen is short
-            let k = ((ctx.content_rect().height() - 215.0) / paper::HEIGHT).clamp(0.55, 1.0);
             let photo = d.path.with_extension("bmp");
             let photo = if photo.is_file() { Some(photo) } else { self.omsi.as_ref().map(|o| o.join("Drivers").join("nopic.bmp")) };
             let (page, _) = ui.allocate_exact_size(egui::vec2(paper::WIDTH * k, paper::HEIGHT * k), egui::Sense::hover());
@@ -497,7 +500,7 @@ impl App {
         };
         let mut done = false;
         let mut delete = false;
-        egui::Window::new(tr("Eliminar")).id(egui::Id::unique("win-confirm")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).collapsible(false).resizable(false).show(ctx, |ui| {
+        if !free::window(ctx, "confirm", tr("Eliminar"), egui::vec2(360.0, 90.0), |ui| {
             ui.label(trf("¿Eliminar al conductor {}? Se guardará antes una copia de seguridad.", &[&d.name]));
             ui.add_space(6.0);
             ui.horizontal(|ui| {
@@ -508,7 +511,9 @@ impl App {
                     done = true;
                 }
             });
-        });
+        }) {
+            done = true;
+        }
         if delete {
             match cfg::delete_driver(&d) {
                 Ok(_) => {
@@ -540,9 +545,9 @@ impl App {
         if !self.tut_open {
             return;
         }
-        let mut open = self.tut_open;
+        let open;
         let mut start = None;
-        egui::Window::new(tr("Tutoriales")).id(egui::Id::unique("win-tutorials")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+        open = free::window(ctx, "tutorials", tr("Tutoriales"), egui::vec2(700.0, 330.0), |ui| {
             ui.horizontal_top(|ui| {
                 ui.vertical(|ui| {
                     for (i, name) in [tr("Tutorial I"), tr("Tutorial II"), tr("Tutorial III"), tr("Tutorial IV")].iter().enumerate() {
@@ -594,7 +599,10 @@ impl App {
 
     /// The launcher's own settings (theme, OMSI folder, window mode); kept apart from OMSI's options.
     fn settings_window(&mut self, ctx: &egui::Context) {
-        let mut open = self.settings_open;
+        if !self.settings_open {
+            return;
+        }
+        let open;
         let mut changed = false;
         let mut plugin_msg: Option<String> = None;
         let mut open_url: Option<String> = None;
@@ -617,7 +625,7 @@ impl App {
                 });
             ui.add_space(8.0);
         };
-        egui::Window::new(tr("Ajustes del launcher")).id(egui::Id::unique("win-settings")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).open(&mut open).collapsible(false).resizable(true).show(ctx, |ui| {
+        open = free::window(ctx, "settings", tr("Ajustes del launcher"), egui::vec2(820.0, 560.0), |ui| {
             ui.set_min_width(780.0);
             ui.label(RichText::new(tr("Estos ajustes son del launcher; las opciones de OMSI 2 están en el botón Opciones.")).italics().size(12.0));
             ui.add_space(8.0);
@@ -828,11 +836,11 @@ impl App {
 
     fn driver_window(&mut self, ctx: &egui::Context) {
         let Some(mut edit) = self.driver_edit.take() else { return };
-        let mut open = true;
+        let open;
         let mut done = false;
         let mut save = false;
         let title = if edit.existing.is_some() { tr("Editar conductor") } else { tr("Crear nuevo conductor") };
-        egui::Window::new(title).id(egui::Id::unique("win-driver")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+        open = free::window(ctx, "driver", &title, egui::vec2(420.0, 300.0), |ui| {
             egui::Grid::new("driver_grid").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
                 ui.label(tr("Nombre:"));
                 ui.text_edit_singleline(&mut edit.name);
@@ -1412,9 +1420,9 @@ impl App {
     fn time_dialog_window(&mut self, ctx: &egui::Context) {
         let Some(mut dlg) = self.time_dialog.clone() else { return };
         let (mut accept, mut cancel) = (false, false);
-        let mut open = true;
+        let open;
         let two = |v: f64, _: std::ops::RangeInclusive<usize>| format!("{:02}", v as u32);
-        egui::Window::new(tr("Seleccionar hora y fecha...")).id(egui::Id::unique("win-time")).pivot(egui::Align2::CENTER_CENTER).default_pos(ctx.content_rect().center()).open(&mut open).collapsible(false).resizable(false).show(ctx, |ui| {
+        open = free::window(ctx, "time", tr("Seleccionar hora y fecha..."), egui::vec2(520.0, 420.0), |ui| {
             ui.set_width(430.0);
             ui.horizontal(|ui| {
                 ui.label(tr("Hora:"));
