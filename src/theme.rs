@@ -39,8 +39,8 @@ impl Theme {
         match self {
             Theme::Original => Palette {
                 bg: c(255, 170, 0),
-                field: c(255, 196, 64),
-                hover: c(255, 214, 110),
+                field: c(255, 222, 148),
+                hover: c(255, 236, 188),
                 line: c(255, 120, 16),
                 text: c(150, 40, 0),
                 border: c(150, 40, 0),
@@ -119,5 +119,13 @@ pub fn apply(ctx: &egui::Context, theme: Theme) {
     v.widgets.hovered.weak_bg_fill = p.hover;
     v.widgets.hovered.bg_fill = p.hover;
     v.widgets.active.weak_bg_fill = p.hover;
+    if theme == Theme::Original {
+        // The main window keeps OMSI 2's orange; the windows over it are a pale cream, and a
+        // chosen item is amber with the brown text still readable on it.
+        v.window_fill = Color32::from_rgb(255, 248, 236);
+        v.faint_bg_color = Color32::from_rgb(255, 240, 214);
+        v.selection.bg_fill = Color32::from_rgb(255, 196, 70);
+        v.selection.stroke = egui::Stroke::new(1.0, p.text);
+    }
     ctx.set_visuals(v);
 }

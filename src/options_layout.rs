@@ -65,7 +65,7 @@ impl Canvas<'_> {
             let galley = p.layout_no_wrap(title.to_string(), egui::FontId::proportional(12.6), pal().text);
             let pos = r.left_top() + vec2(8.0, -9.0);
             let p = p.with_clip_rect(r.expand2(vec2(0.0, 12.0)));
-            p.rect_filled(Rect::from_min_size(pos - vec2(3.0, 0.0), galley.size() + vec2(6.0, 0.0)), 0.0, pal().bg);
+            p.rect_filled(Rect::from_min_size(pos - vec2(3.0, 0.0), galley.size() + vec2(6.0, 0.0)), 0.0, ui.visuals().window_fill);
             p.galley(pos, galley, pal().text);
         }
     }
@@ -284,7 +284,7 @@ fn graphics(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     // particle systems: the box has its own "Activo" checkbox on the border
     cv.group(ui, 21.0, 326.0, 241.0, 101.0, &cv.t("DG_Options_GroupBox4", "Sistemas de partículas"));
     let active = o.get("smokesystems", 0).is_some_and(|s| s != "0");
-    ui.painter().rect_filled(cv.rect(160.0, 321.0, 90.0, 20.0), 0.0, pal().bg);
+    ui.painter().rect_filled(cv.rect(160.0, 321.0, 90.0, 20.0), 0.0, ui.visuals().window_fill);
     c |= cv.int_bool(ui, o, 163.0, 331.0, 90.0, &cv.t("DG_Options_CheckBox17", "Activo"), "smokesystems", "GRAPHICS", 0);
     ui.scope(|ui| {
         ui.add_enabled_ui(active, |ui| {
@@ -306,7 +306,7 @@ fn graphics(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
     cv.note(ui, 364.0, 266.0, 215.0, 40.0, &format!("{map}: {}", cv.t(&format!("DG_Options_Label72_{map}"), "")));
 
     cv.group(ui, 293.0, 339.0, 256.0, 96.0, "");
-    ui.painter().rect_filled(cv.rect(298.0, 329.0, 190.0, 20.0), 0.0, pal().bg);
+    ui.painter().rect_filled(cv.rect(298.0, 329.0, 190.0, 20.0), 0.0, ui.visuals().window_fill);
     c |= cv.flag(ui, o, 301.0, 339.0, 190.0, &cv.t("DG_Options_CheckBox28", "Efectos de búfer stencil"), "no_stencilbuffer", "GRAPHICS", true);
     let stencil = !o.has("no_stencilbuffer");
     ui.scope(|ui| {

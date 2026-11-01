@@ -2,7 +2,7 @@
 
 **A fast, modern launcher for the vanilla OMSI 2 bus simulator.** Pick the map, driver, date and time, press *Start* and OMSI 2 opens and loads the map for you, with no clicking through the start screen.
 
-> **Version 0.9.1** (see the [release notes](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [Español](README.es.md) · [Web page](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Download](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
+> **Version 0.9.2** (see the [release notes](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [Español](README.es.md) · [Web page](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Download](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
 
 ![The launcher](docs/img/launcher.png)
 
@@ -50,7 +50,7 @@ The plugin currently recognises **OMSI 2 version 2.3.004** only.
 
 ## Install
 
-1. Download `OMSI2-Launcher-0.9.1-win64.zip` from the [releases page](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) and unzip it anywhere.
+1. Download `OMSI2-Launcher-0.9.2-win64.zip` from the [releases page](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) and unzip it anywhere.
 2. Run `OMSI2-Launcher.exe`. It finds OMSI 2 by itself (Steam or Aerosoft default folders); if it cannot, it asks where it is.
 3. Open **Launcher settings** and press **Install plugin**.
 4. Choose your map and driver and press **Start**.

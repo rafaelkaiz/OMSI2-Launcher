@@ -6,8 +6,8 @@ use std::sync::{Arc, Mutex};
 /// GitHub repository whose releases are checked ("owner/name").
 pub const REPO: &str = "rafaelkaiz/OMSI2-Launcher";
 
-/// The version as people read it ("0.9.1"); `VERSION` is the same in the form Cargo and the version comparison use.
-pub const LABEL: &str = "0.9.1";
+/// The version as people read it ("0.9.2"); `VERSION` is the same in the form Cargo and the version comparison use.
+pub const LABEL: &str = "0.9.2";
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

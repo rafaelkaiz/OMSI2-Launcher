@@ -60,7 +60,6 @@ impl Lang {
             "POR" => "Português",
             "HUN" => "Magyar",
             "SRB" => "Srpski",
-            "RUH" => "Ruhrdeutsch",
             code => external_name(code).unwrap_or(code),
         }
     }
@@ -223,7 +222,7 @@ pub fn omsi_languages(omsi: &Path) -> Vec<Lang> {
 pub fn available(omsi: Option<&Path>) -> Vec<Lang> {
     let mut all: Vec<Lang> = Lang::BUILTIN.to_vec();
     if let Some(o) = omsi {
-        all.extend(omsi_languages(o));
+        all.extend(omsi_languages(o).into_iter().filter(|l| l.code() != "RUH")); // Ruhrdeutsch is a dialect joke, not a language to offer
     }
     if let Ok(rd) = std::fs::read_dir(lang_dir()) {
         for e in rd.flatten() {
