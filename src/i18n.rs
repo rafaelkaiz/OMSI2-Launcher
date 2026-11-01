@@ -7,8 +7,8 @@ use std::sync::{Mutex, OnceLock, RwLock};
 
 /// A language, named by the three letters OMSI uses for it in `Languages\<CODE>_basic.olf` (ESP, ENG, DEU...).
 ///
-/// Seven languages are built into the launcher. Any other one OMSI has (a Chinese `CHN_basic.olf`, say) appears in the list too, and
-/// its launcher texts come from a file `%APPDATA%\OMSI2-Launcher\lang\<CODE>.txt` (see `write_template`).
+/// Nine languages are built into the launcher. Any other one appears in the list when it has a file `%APPDATA%OMSI2-Launcherlang<CODE>.txt`
+/// (see `write_template`), and its launcher texts come from that file.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct Lang(&'static str);
 
@@ -21,8 +21,10 @@ impl Lang {
     pub const Cs: Lang = Lang("CZE");
     pub const Fr: Lang = Lang("FRA");
     pub const Pt: Lang = Lang("POR");
+    pub const Hu: Lang = Lang("HUN");
+    pub const Sr: Lang = Lang("SRB");
     /// The languages the launcher is translated into by itself.
-    pub const BUILTIN: [Lang; 7] = [Lang::Es, Lang::En, Lang::De, Lang::Pl, Lang::Cs, Lang::Fr, Lang::Pt];
+    pub const BUILTIN: [Lang; 9] = [Lang::Es, Lang::En, Lang::De, Lang::Pl, Lang::Cs, Lang::Fr, Lang::Pt, Lang::Hu, Lang::Sr];
 
     /// The three-letter code, in capitals.
     pub fn code(self) -> &'static str {
@@ -185,6 +187,21 @@ fn table() -> &'static HashMap<&'static str, [&'static str; 6]> {
     T.get_or_init(|| ROWS.iter().copied().collect())
 }
 
+
+/// The translations of the languages that are not a column of `ROWS`: one text per line, in the order of `ROWS`.
+fn embedded(code: &str) -> Option<&'static Texts> {
+    static HUN: OnceLock<Texts> = OnceLock::new();
+    static SRB: OnceLock<Texts> = OnceLock::new();
+    let (cell, source) = match code {
+        "HUN" => (&HUN, include_str!("lang/HUN.txt")),
+        "SRB" => (&SRB, include_str!("lang/SRB.txt")),
+        _ => return None,
+    };
+    Some(cell.get_or_init(|| {
+        let lines: Vec<&str> = source.lines().map(|l| l.trim_end_matches('\r')).collect();
+        ROWS.iter().zip(lines).map(|((key, _), text)| (*key, Box::leak(unescape(text).into_boxed_str()) as &'static str)).collect()
+    }))
+}
 pub fn has(key: &str) -> bool {
     table().contains_key(key)
 }
@@ -193,6 +210,9 @@ pub fn has(key: &str) -> bool {
 pub fn tr(key: &str) -> &str {
     let cur = current().read().unwrap();
     if let Some(s) = cur.external.get(key) {
+        return *s;
+    }
+    if let Some(s) = embedded(cur.lang.code()).and_then(|t| t.get(key)) {
         return *s;
     }
     match cur.lang.column().and_then(|i| table().get(key).map(|r| r[i])) {
@@ -218,12 +238,10 @@ pub fn omsi_languages(omsi: &Path) -> Vec<Lang> {
     codes.iter().map(|c| Lang::from_code(c)).collect()
 }
 
-/// Every language the launcher can be shown in: its built-in ones, those OMSI has and those with a file in the `lang` folder.
-pub fn available(omsi: Option<&Path>) -> Vec<Lang> {
+/// Every language the launcher can be shown in: the ones it is translated into and those with a file in the `lang` folder. OMSI's own
+/// languages are not offered unless the launcher has texts for them.
+pub fn available(_omsi: Option<&Path>) -> Vec<Lang> {
     let mut all: Vec<Lang> = Lang::BUILTIN.to_vec();
-    if let Some(o) = omsi {
-        all.extend(omsi_languages(o).into_iter().filter(|l| l.code() != "RUH")); // Ruhrdeutsch is a dialect joke, not a language to offer
-    }
     if let Ok(rd) = std::fs::read_dir(lang_dir()) {
         for e in rd.flatten() {
             let file = e.file_name().to_string_lossy().to_uppercase();
@@ -358,7 +376,7 @@ const ROWS: &[Row] = &[
         "Informations sur l'heure sélectionnée :",
         "Informações sobre a hora selecionada:",
     ]),
-    ("¡Iniciar!", ["Start!", "Starten!", "Start!", "Spustit!", "Démarrer !", "Iniciar!"]),
+    ("¡Iniciar!", ["Start!", "Starten!", "Uruchom!", "Spustit!", "Démarrer !", "Iniciar!"]),
     ("Tutoriales", ["Tutorials", "Tutorials", "Samouczki", "Tutoriály", "Tutoriels", "Tutoriais"]),
     ("Opciones", ["Options", "Optionen", "Opcje", "Možnosti", "Options", "Opções"]),
     ("Cerrar", ["Close", "Schließen", "Zamknij", "Zavřít", "Fermer", "Fechar"]),
@@ -446,13 +464,13 @@ const ROWS: &[Row] = &[
     ("Establecer hora de la situación", ["Set time of situation", "Zeit der Situation verwenden", "Ustaw czas sytuacji", "Nastavit čas situace", "Régler l'heure de la situation", "Definir a hora da situação"]),
     ("Crear plantilla de traducción", ["Create translation template", "Übersetzungsvorlage erstellen", "Utwórz szablon tłumaczenia", "Vytvořit šablonu překladu", "Créer un modèle de traduction", "Criar modelo de tradução"]),
     ("Abrir carpeta de idiomas", ["Open languages folder", "Sprachordner öffnen", "Otwórz folder języków", "Otevřít složku jazyků", "Ouvrir le dossier des langues", "Abrir pasta de idiomas"]),
-    ("Los idiomas de la carpeta Languages de OMSI aparecen solos; para sus textos del launcher añade un archivo <CÓDIGO>.txt en la carpeta de idiomas.", [
-        "The languages in OMSI's Languages folder appear by themselves; for the launcher's own texts add a <CODE>.txt file to the languages folder.",
-        "Die Sprachen im Languages-Ordner von OMSI erscheinen von selbst; für die Texte des Launchers eine Datei <CODE>.txt in den Sprachordner legen.",
-        "Języki z folderu Languages OMSI pojawiają się same; dla tekstów launchera dodaj plik <KOD>.txt do folderu języków.",
-        "Jazyky ze složky Languages OMSI se objeví samy; pro texty launcheru přidej soubor <KÓD>.txt do složky jazyků.",
-        "Les langues du dossier Languages d'OMSI apparaissent d'elles-mêmes ; pour les textes du launcher, ajoutez un fichier <CODE>.txt au dossier des langues.",
-        "Os idiomas da pasta Languages do OMSI aparecem sozinhos; para os textos do launcher adiciona um ficheiro <CÓDIGO>.txt à pasta de idiomas.",
+    ("Para añadir otro idioma, crea una plantilla de traducción y guárdala como <CÓDIGO>.txt en la carpeta de idiomas.", [
+        "To add another language, create a translation template and save it as <CODE>.txt in the languages folder.",
+        "Für eine weitere Sprache eine Übersetzungsvorlage erstellen und als <CODE>.txt im Sprachordner speichern.",
+        "Aby dodać kolejny język, utwórz szablon tłumaczenia i zapisz go jako <KOD>.txt w folderze języków.",
+        "Chcete-li přidat další jazyk, vytvořte šablonu překladu a uložte ji jako <KÓD>.txt do složky jazyků.",
+        "Pour ajouter une autre langue, créez un modèle de traduction et enregistrez-le sous <CODE>.txt dans le dossier des langues.",
+        "Para adicionar outro idioma, cria um modelo de tradução e guarda-o como <CÓDIGO>.txt na pasta de idiomas.",
     ]),
     ("Seleccionar hora y fecha...", ["Select time and date...", "Uhrzeit und Datum wählen...", "Wybierz godzinę i datę...", "Vyberte čas a datum...", "Choisir l'heure et la date...", "Escolher hora e data..."]),
     ("Fecha:", ["Date:", "Datum:", "Data:", "Datum:", "Date :", "Data:"]),
@@ -667,7 +685,7 @@ const ROWS: &[Row] = &[
         "Ouvrir OMSI en mode fenêtré",
         "Abrir o OMSI em modo janela",
     ]),
-    ("Carpeta: {}", ["Folder: {}", "Ordner: {}", "Folder: {}", "Složka: {}", "Dossier : {}", "Pasta: {}"]),
+    ("Carpeta: {}", ["Folder: {}", "Ordner: {}", "Katalog: {}", "Složka: {}", "Dossier : {}", "Pasta: {}"]),
     ("no encontrada", ["not found", "nicht gefunden", "nie znaleziono", "nenalezena", "introuvable", "não encontrada"]),
     ("Otra carpeta:", ["Other folder:", "Anderer Ordner:", "Inny folder:", "Jiná složka:", "Autre dossier :", "Outra pasta:"]),
     ("(la carpeta nueva se usa al reiniciar el launcher)", [
@@ -1048,6 +1066,20 @@ const ROWS: &[Row] = &[
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn embedded_languages_have_a_text_for_every_row() {
+        for code in ["HUN", "SRB"] {
+            let source = if code == "HUN" { include_str!("lang/HUN.txt") } else { include_str!("lang/SRB.txt") };
+            let lines: Vec<&str> = source.lines().collect();
+            assert_eq!(lines.len(), ROWS.len(), "{code} has a different number of lines than ROWS");
+            for ((k, _), t) in ROWS.iter().zip(lines) {
+                assert!(!t.trim().is_empty(), "{code}: empty text for {k}");
+                assert_eq!(unescape(t).matches("{}").count(), k.matches("{}").count(), "{code}: placeholder mismatch in {k}");
+            }
+            assert!(embedded(code).is_some_and(|t| t.len() == ROWS.len()));
+        }
+    }
 
     #[test]
     fn rows_are_unique_and_complete() {

@@ -2,7 +2,7 @@
 
 **A fast, modern launcher for the vanilla OMSI 2 bus simulator.** Pick the map, driver, date and time, press *Start* and OMSI 2 opens and loads the map for you, with no clicking through the start screen.
 
-> **Version 0.9.2** (see the [release notes](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [Español](README.es.md) · [Web page](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Download](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
+> **Version 0.9.3** (see the [release notes](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)). [Español](README.es.md) · [Web page](https://rafaelkaiz.github.io/OMSI2-Launcher/) · [Download](https://github.com/rafaelkaiz/OMSI2-Launcher/releases)
 
 ![The launcher](docs/img/launcher.png)
 
@@ -15,7 +15,7 @@
 - **OMSI's options window, rebuilt**: General, Advanced, Graphics, Graphics (advanced), Sound and AI traffic, laid out like the original. Load option presets and save your current options as a new preset.
 - **Drivers**: edit, create and delete drivers, and see the staff file (stops, distance, comfort rating, buses driven).
 - **Looks like OMSI**: the original orange design, plus a dark and a light theme. Opens full screen with a loading screen that stays up until OMSI is loading the map (F11 toggles full screen).
-- **Languages**: Español, English, Deutsch, Polski, Čeština, Français and Português, plus any language in OMSI's `Languages` folder (add a `<CODE>.txt` file for the launcher's own texts; a template is created for you). The first run picks your Windows language.
+- **Languages**: Español, English, Deutsch, Polski, Čeština, Français, Português, Magyar and Srpski, plus any other language you add (a `<CODE>.txt` file in the launcher's languages folder; a template is created for you). The first run picks your Windows language.
 - **Removes the `closecheck` file** OMSI leaves behind after a crash (optional).
 - **Checks GitHub for new versions** (it only tells you; it never downloads or replaces anything by itself).
 
@@ -50,7 +50,7 @@ The plugin currently recognises **OMSI 2 version 2.3.004** only.
 
 ## Install
 
-1. Download `OMSI2-Launcher-0.9.2-win64.zip` from the [releases page](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) and unzip it anywhere.
+1. Download `OMSI2-Launcher-0.9.3-win64.zip` from the [releases page](https://github.com/rafaelkaiz/OMSI2-Launcher/releases) and unzip it anywhere.
 2. Run `OMSI2-Launcher.exe`. It finds OMSI 2 by itself (Steam or Aerosoft default folders); if it cannot, it asks where it is.
 3. Open **Launcher settings** and press **Install plugin**.
 4. Choose your map and driver and press **Start**.

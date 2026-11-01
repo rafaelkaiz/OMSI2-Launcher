@@ -1,0 +1,309 @@
+Kész.
+Az OMSI 2 nem található. Add meg a mappáját argumentumként vagy az OMSI_DIR változóban.
+Támogatás? Kiegészítők? Infó? forum.omnibussimulator.de/forum/
+Jelenlegi sofőr:
+Sofőr szerkesztése
+Új sofőr létrehozása
+Zárd be az OMSI 2-t a sofőrök szerkesztéséhez.
+Dátum és idő
+A szituáció dátumának és idejének használata (a térképről)
+Aktuális dátum/idő használata:
+Dátum és idő kiválasztása:
+Idő
+Dátum
+Év
+Kézi
+Reggel
+Nappal
+Délután
+Éjszaka
+Idő:
+Az OMSI nyitva van: a változás a következő megnyitáskor lép életbe.
+Információ a kiválasztott időről:
+Indítás!
+Oktatóprogramok
+Beállítások
+Bezárás
+Jelenlegi térkép:
+Térkép utolsó állapotának betöltése
+Térkép betöltése buszok nélkül
+Mentett szituáció betöltése
+Információ a kiválasztott térképről:
+Launcher beállításai
+Ezek a launcher beállításai; az OMSI 2 beállításai a Beállítások gomb alatt vannak.
+Launcher nyelve
+A launcher bezárása az OMSI indításakor
+Az OMSI 2 nem található
+Add meg a mappát, ahová az OMSI 2 telepítve van (amelyik az Omsi.exe-t tartalmazza).
+Tallózás...
+Ez a mappa nem tartalmazza az Omsi.exe-t.
+Válaszd ki az OMSI 2 mappáját
+A „closecheck” fájl törlése, ha az OMSI 2 összeomlik
+Az OMSI 2 indításához telepítsd a plugint a launcher beállításaiban.
+Megjelenés helye:
+A szituáció idejének beállítása
+Fordítási sablon létrehozása
+Nyelvi mappa megnyitása
+A nyelvek hozzáadásához hozz létre fordítási sablont, és mentsd <KÓD>.txt néven a nyelvi mappába.
+Idő és dátum kiválasztása...
+Dátum:
+Aktuális idő
+Aktuális dátum
+Aktuális év
+A hét napja:
+Ünnepnapok:
+Dátum és idő módosítása...
+a szituációé
+Ha nem módosítod a dátumot, az OMSI a térkép szituációjának dátumát használja.
+Hétfő
+Kedd
+Szerda
+Csütörtök
+Péntek
+Szombat
+Vasárnap
+{}. oldal
+Várakozás az OMSI kezdőpozíció-ablakára...
+A megjelenési pont kiválasztása...
+Az OMSI bezárult, mielőtt a kezdőpozíciót kérte volna.
+Az OMSI kezdőpozíció-ablaka nem jelent meg.
+Az OMSI kezdőpozíció-ablaka nem a várt listát tartalmazza.
+Az OMSI nem listázza a következő helyet: „{}”.
+Az OMSI Elfogadás gombja nem található.
+Biztonsági mentések mappájának megnyitása
+4 GB-os javítás
+Az Omsi.exe fejlécében egyetlen bitet módosít, hogy az OMSI 2 GB helyett legfeljebb 4 GB memóriát használhasson. Nem gyorsít semmit; megakadályozza a memóriahiány miatti összeomlást. Előtte az Omsi.exe másolata a biztonsági mentések mappájába kerül. A Steam frissítéskor vagy fájlellenőrzéskor visszavonhatja.
+Omsi.exe: 4 GB-os javítás bekapcsolva.
+Omsi.exe: 4 GB-os javítás kikapcsolva.
+Omsi.exe: nem olvasható.
+Módosítod most az Omsi.exe-t? Előtte másolat készül.
+Megerősítés
+4 GB-os javítás alkalmazása
+4 GB-os javítás eltávolítása
+Zárd be az OMSI-t az Omsi.exe módosításához.
+4 GB-os javítás alkalmazva az Omsi.exe-n (másolat a biztonsági mentések mappájában).
+4 GB-os javítás eltávolítva az Omsi.exe-ről (másolat a biztonsági mentések mappájában).
+Az Omsi.exe nem módosítható: {}
+Megjelenés
+Biztonsági mentések
+Frissítések
+Telepített verzió: {}
+Frissítések keresése
+Keresés...
+A legfrissebb verziót használod.
+Új verzió érhető el: {}
+Letöltési oldal megnyitása
+Az ellenőrzés nem sikerült (nincs kapcsolat, vagy még nincs kiadott verzió?).
+A verziók a github.com/{} oldalon jelennek meg. A launcher csak értesít: magától semmit nem tölt le és nem módosít.
+Minden fájlból a 3 legújabb mentés marad meg; új készítésekor a legrégebbi törlődik.
+Előbeállítás neve
+Mentés előbeállításként
+A(z) „{}” előbeállítás elmentve az option_presets mappába.
+Már létezik ilyen nevű előbeállítás.
+Adj meg egy nevet az előbeállításnak.
+Az előbeállítás nem menthető: {}
+A sofőr látható a saját buszodban
+Betöltés/Mentés
+Betöltési beállítások:
+Betöltés
+Jelenlegi beállítások mentése:
+Mentés!
+Speciális játékbeállítások
+Ütközések
+Teljesítmény
+Részecskerendszerek
+Kényszerített takarékos tükröződési mód
+Dinamikus csempeszám-csökkentés
+Textúrák...
+Anyagcsatornák használata...
+Aktuális dátum/idő használata
+OK
+Év (± a térképtől függő eltolás)
+Aktív
+Objektumok maximális összetettsége
+A térkép maximális összetettsége
+Nem menetrend szerinti (pl. autók)
+Közúti forgalom aránya
+Parkoló autók
+Utasok aránya a megállókban
+A legnagyobb emberszám az összes látható személy felső határa.
+Vedd figyelembe, hogy a látható területen lévő összes megállóban együtt sem lehet több utas, mint a legnagyobb emberszám!
+Közvetlen indítás (plugin)
+Plugin telepítése
+Plugin eltávolítása
+Plugin telepítve.
+Plugin telepítve (régi verzió: telepítsd újra).
+Plugin nincs telepítve.
+Két új fájlt ad az OMSI plugins mappájához (OMSI2Launcher.opl és OMSI2LauncherPlugin.dll), meglévőt nem módosít. Vele az Indítás! gombot az OMSI-n belül nyomja meg, egérkattintás helyett. A következő OMSI-indításkor működik.
+Plugin telepítve az OMSI plugins mappájába. A következő OMSI-indításkor működik.
+Plugin eltávolítva az OMSI plugins mappájából.
+A plugin nem telepíthető: {}
+A plugin nem távolítható el: {}
+A plugin nem válaszolt: helyette az egeret használja.
+A launcher legyen mindig elöl
+A launcher megnyitása teljes képernyőn (F11)
+A launcher újraindításakor lép életbe (az F11 most azonnal módosítja).
+OMSI 2 betöltése...
+Ez eltarthat pár percig.
+Eltelt idő: {}
+A launcher elrejtése
+Térkép:
+Téma
+Eredeti (OMSI 2 narancs)
+Sötét
+Világos
+OMSI megnyitása ablakos módban
+Mappa: {}
+nem található
+Másik mappa:
+(az új mappa a launcher újraindítása után lép érvénybe)
+Név:
+Nem:
+Férfi
+Nő
+Születési dátum:
+(nap / hónap / év)
+Mentés
+Mégse
+Személyzeti adatlap megnyitása…
+Személyzeti adatlap
+A mentett szituáció kiválasztása...
+Az OMSI nem listázza a következő szituációt: „{}”.
+Az OMSI szituációlistája nem jelent meg.
+Csak a kiválasztott térkép szituációi
+Információ a kiválasztott szituációról:
+Nincs szituáció kiválasztva!
+Ehhez a térképhez nincs mentett szituáció.
+Törlés
+Törlöd a(z) {} sofőrt? Előtte biztonsági másolat készül.
+Sofőr törölve (biztonsági mentés: %APPDATA%\\OMSI2-Launcher\\backups).
+Sofőr mentve (biztonsági mentés: %APPDATA%\\OMSI2-Launcher\\backups).
+I. oktatóprogram
+II. oktatóprogram
+III. oktatóprogram
+IV. oktatóprogram
+Válassz oktatóprogramot
+Oktatóprogram indítása
+Az OMSI 2 megnyitása...
+Az OMSI 2 már nyitva van, várakozás a kezdőképernyőre...
+Az OMSI nem jutott el a kezdőképernyőig (10 perc).
+Kezdőképernyő felismerve, térkép kiválasztása...
+Az Indítás! megnyomása...
+A térkép betöltése az OMSI 2-ben...
+Dátum és idő kiválasztása...
+Az OMSI dátum- és időablaka nem nyílt meg.
+Az OMSI dátum- és időablaka nem a várt kinézetű.
+Az oktatóprogram-menü megnyitása...
+Az OMSI oktatóprogram-menüje nem nyílt meg.
+Az oktatóprogram betöltése az OMSI 2-ben...
+Az Omsi.exe nem nyitható meg: {}
+Az OMSI nem listázza a következő térképet: „{}”.
+A mentési mappa nem hozható létre: {}
+A biztonsági mentés nem készíthető el: {}
+A visszaállítás nem sikerült: {}
+Az options.cfg nem menthető: {}
+A sofőr nem írható: {}
+Az előző fájl nem távolítható el: {}
+A beállítások mappája nem hozható létre: {}
+A beállítások nem menthetők: {}
+Érvénytelen név (nem lehet üres, és nem tartalmazhatja ezeket: \\ / : * ? " < > | [ ]).
+A születési dátum formátuma éééehhnn legyen (például 19950606).
+Már létezik ilyen nevű sofőr.
+A sofőr nem olvasható.
+Érvénytelen sofőrfájl.
+Játékbeállítások
+Az options.cfg nem olvasható.
+OMSI előbeállítás:
+Előbeállítás betöltése
+A(z) „{}” előbeállítás betöltve (nincs mentve: nyomd meg a Mentés gombot a Beállításokban vagy az Indítást!).
+Az előbeállítás a grafikát, a hangot és a forgalmat módosítja; a térképet, a sofőrt, a nyelvet és a dátumot nem.
+Az OMSI 2 nyitva van: zárd be a módosítások mentéséhez.
+Beállítások elmentve (biztonsági mentés: %APPDATA%\\OMSI2-Launcher\\backups).
+Utolsó mentés visszaállítása
+Az options.cfg visszaállítva az utolsó mentésből.
+Nem mentett módosítások vannak (az Indítás! megnyomásakor mentődnek).
+Keresés:
+Nincs találat
+Írj a kereséshez
+Általános
+Speciális
+Grafika
+Grafika (speciális)
+Hang
+MI-forgalom
+Nincs
+Könnyű
+Takarékos
+Teljes
+Végtelen
+Nagyon rossz karbantartás
+Rossz karbantartás
+Normál karbantartás
+Jó karbantartás
+Nyelv
+Jegyeladás
+Rádióállomás összekapcsolása
+Karbantartási állapot
+A sofőr feje mozog
+Sima nézetváltások a sofőrnézetben
+Alternatív nézet (nagyítás = [Shift] + jobb gomb, eltolás = jobb gomb)
+Automatikus kormányközpontosítás (csak billentyűzetvezérlésnél)
+Automatikus kuplung
+Dinamikus kormánysebesség
+Ütközések más járművekkel és a tájjal
+Az automatikus menetrend-elemzés ne jelenjen meg
+Segítség mutatása a jegyeladáshoz és az utasokkal folytatott párbeszédhez
+Automatikus mentés
+Hibaüzenetek megjelenítése
+Ütközések: a felhasználó járműve és a terep között
+Ütközések: a felhasználó járművei és a gyalogosok között
+Ütközések: MI-járművek között
+Teljesítmény: többszálú számítás
+Teljesítmény: többszálú textúrabetöltés
+A teljes térkép betöltése induláskor
+Célzott képkockasebesség
+Szomszédos csempék száma
+Objektumok maximális látótávolsága
+Objektumok minimális mérete (a képernyőméret %-ában)
+… tükröződésekhez
+Valós idejű tükröződések
+Részecskerendszerek: aktív
+Max. részecskék emitterenként
+Részecskék: csak a felhasználó járműve
+Részecskék: nincs részecskerendszer a tükröződésekben
+Napfény-ragyogás effekt
+Objektumok maximális összetettsége (0–3)
+A térkép maximális összetettsége (0–2)
+Stencilpuffer-effektek
+Árnyékok
+Esőtükröződések
+Esőtükröződésekben látható személyek
+Kézi képarány
+Takarékos tükröződési mód: bekapcsolás FPS alatt
+Takarékos tükröződési mód: kikapcsolás FPS felett
+Dinamikus csempecsökkentés: csökkentés FPS alatt
+Dinamikus csempecsökkentés: növelés FPS felett
+Csak alacsony felbontású textúrák használata
+Minden textúra (a saját busz kivételével) korlátozása 256 px-re
+Max. textúramemória a nagy felbontású textúrákhoz (MB)
+Valós idejű tükröződések textúramérete
+Anyagcsatorna: Night Map
+Anyagcsatorna: Light Map
+Anyagcsatorna: Light Map of Terrain
+Anyagcsatorna: Reflexion Map
+Anyagcsatorna: Bump Map
+Főhangerő
+Sztereó hatás
+Hangok maximális száma
+MI-járművek hangjai aktívak
+Környezeti hangok aktívak
+Doppler-hatás
+Visszhanghatások
+Max. közúti forgalom
+Menetrend szerinti (pl. buszok)
+Közúti forgalom aránya (%)
+Menetrend prioritása
+Parkoló autók (%)
+Csökkentett MI-lista használata (kevesebb különböző típus)
+Max. emberszám
+Utasok aránya a megállókban (%)

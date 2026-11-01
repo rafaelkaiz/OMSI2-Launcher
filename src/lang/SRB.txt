@@ -1,0 +1,309 @@
+Spremno.
+OMSI 2 nije pronađen. Navedite njegov folder kao argument ili u OMSI_DIR.
+Podrška? Dodaci? Informacije? forum.omnibussimulator.de/forum/
+Trenutni vozač:
+Izmeni vozača
+Napravi novog vozača
+Zatvorite OMSI 2 da biste izmenili vozače.
+Datum i vreme
+Koristi datum i vreme situacije (sa mape)
+Koristi trenutni datum/vreme:
+Izaberi datum i vreme:
+Vreme
+Datum
+Godina
+Ručno
+Jutro
+Dan
+Popodne
+Noć
+Vreme:
+OMSI je otvoren: promena će se primeniti sledeći put kada ga otvorite.
+Informacije o izabranom vremenu:
+Pokreni!
+Vodiči
+Opcije
+Zatvori
+Trenutna mapa:
+Učitaj poslednje stanje mape
+Učitaj mapu bez autobusa
+Učitaj sačuvanu situaciju
+Informacije o izabranoj mapi:
+Podešavanja launchera
+Ovo su podešavanja launchera; opcije OMSI 2 su pod dugmetom Opcije.
+Jezik launchera
+Zatvori launcher kada se OMSI pokrene
+OMSI 2 nije pronađen
+Navedite folder u kojem je OMSI 2 instaliran (onaj koji sadrži Omsi.exe).
+Pregledaj...
+Taj folder ne sadrži Omsi.exe.
+Izaberite folder OMSI 2
+Obriši datoteku „closecheck” kada OMSI 2 pukne
+Instalirajte dodatak u podešavanjima launchera da biste mogli da pokrenete OMSI 2.
+Pojavi se na:
+Postavi vreme situacije
+Napravi šablon za prevod
+Otvori folder sa jezicima
+Da biste dodali drugi jezik, napravite šablon za prevod i sačuvajte ga kao <KOD>.txt u folderu sa jezicima.
+Izaberi vreme i datum...
+Datum:
+Trenutno vreme
+Trenutni datum
+Trenutna godina
+Dan u nedelji:
+Praznici:
+Promeni datum i vreme...
+kao u situaciji
+Ako ne promenite datum, OMSI koristi datum situacije sa mape.
+Ponedeljak
+Utorak
+Sreda
+Četvrtak
+Petak
+Subota
+Nedelja
+Strana {}
+Čeka se prozor OMSI-ja za početnu poziciju...
+Biranje mesta pojavljivanja...
+OMSI se zatvorio pre nego što je tražio početnu poziciju.
+Prozor OMSI-ja za početnu poziciju nije se pojavio.
+Prozor OMSI-ja za početnu poziciju nema očekivanu listu.
+OMSI ne navodi mesto „{}”.
+Dugme Prihvati u OMSI-ju nije pronađeno.
+Otvori folder sa rezervnim kopijama
+Zakrpa od 4 GB
+Menja jedan bit u zaglavlju datoteke Omsi.exe da bi OMSI mogao da koristi do 4 GB memorije umesto 2 GB. Ništa ne ubrzava; sprečava padove zbog nedostatka memorije. Prethodno se kopija datoteke Omsi.exe čuva u folderu sa rezervnim kopijama. Steam to može poništiti pri ažuriranju ili proveri datoteka.
+Omsi.exe: zakrpa od 4 GB uključena.
+Omsi.exe: zakrpa od 4 GB isključena.
+Omsi.exe: nije moguće pročitati.
+Izmeniti Omsi.exe sada? Prethodno se čuva kopija.
+Potvrdi
+Primeni zakrpu od 4 GB
+Ukloni zakrpu od 4 GB
+Zatvorite OMSI da biste izmenili Omsi.exe.
+Zakrpa od 4 GB primenjena na Omsi.exe (kopija u folderu sa rezervnim kopijama).
+Zakrpa od 4 GB uklonjena sa Omsi.exe (kopija u folderu sa rezervnim kopijama).
+Omsi.exe nije moguće izmeniti: {}
+Izgled
+Rezervne kopije
+Ažuriranja
+Instalirana verzija: {}
+Potraži ažuriranja
+Traženje...
+Imate najnoviju verziju.
+Dostupna je nova verzija: {}
+Otvori stranicu za preuzimanje
+Provera nije uspela (nema veze ili još nije objavljena nijedna verzija?).
+Verzije se objavljuju na github.com/{}. Launcher samo obaveštava: sam ništa ne preuzima niti menja.
+Čuvaju se 3 najnovije kopije svake datoteke; pravljenjem nove briše se najstarija.
+Naziv podešavanja
+Sačuvaj kao podešavanje
+Podešavanje „{}” sačuvano u option_presets.
+Podešavanje s tim nazivom već postoji.
+Upišite naziv podešavanja.
+Podešavanje nije moguće sačuvati: {}
+Vozač je vidljiv u vašem autobusu
+Učitaj/Sačuvaj
+Opcije učitavanja:
+Učitaj
+Sačuvaj trenutne opcije:
+Sačuvaj!
+Napredne opcije igre
+Sudari
+Performanse
+Sistemi čestica
+Prinudni štedljivi režim refleksija
+Dinamičko smanjenje broja ploča
+Teksture...
+Koristi kanale materijala...
+Koristi trenutni datum/vreme
+U redu
+Godina (± pomak zavisan od mape)
+Aktivno
+Maksimalna složenost objekata
+Maksimalna složenost mape
+Bez reda vožnje (npr. automobili)
+Faktor drumskog saobraćaja
+Parkirani automobili
+Faktor putnika na stanicama
+Maks. broj ljudi je gornja granica za sve vidljive osobe.
+Imajte na umu da na svim stanicama u vidljivom području zajedno ne može biti više putnika od maks. broja ljudi!
+Direktno pokretanje (dodatak)
+Instaliraj dodatak
+Ukloni dodatak
+Dodatak instaliran.
+Dodatak instaliran (stara verzija: instalirajte ga ponovo).
+Dodatak nije instaliran.
+Dodaje dve nove datoteke u folder plugins OMSI-ja (OMSI2Launcher.opl i OMSI2LauncherPlugin.dll) i ne menja nijednu postojeću. Uz njega se Pokreni! pritiska unutar OMSI-ja umesto klikom miša. Radi sledeći put kada otvorite OMSI.
+Dodatak instaliran u folder plugins OMSI-ja. Radi sledeći put kada otvorite OMSI.
+Dodatak uklonjen iz foldera plugins OMSI-ja.
+Dodatak nije moguće instalirati: {}
+Dodatak nije moguće ukloniti: {}
+Dodatak nije odgovorio: umesto njega se koristi miš.
+Drži launcher uvek na vrhu
+Otvori launcher preko celog ekrana (F11)
+Primeniće se kada se launcher ponovo pokrene (F11 to menja odmah).
+Učitavanje OMSI 2...
+Ovo može potrajati nekoliko minuta.
+Proteklo vreme: {}
+Sakrij launcher
+Mapa:
+Tema
+Originalna (narandžasta OMSI 2)
+Tamna
+Svetla
+Otvori OMSI u prozoru
+Folder: {}
+nije pronađen
+Drugi folder:
+(novi folder se koristi nakon ponovnog pokretanja launchera)
+Ime:
+Pol:
+Muški
+Ženski
+Datum rođenja:
+(dan / mesec / godina)
+Sačuvaj
+Otkaži
+Otvori kadrovski karton…
+Kadrovski karton
+Biranje sačuvane situacije...
+OMSI ne navodi situaciju „{}”.
+Lista situacija OMSI-ja nije se pojavila.
+Samo situacije izabrane mape
+Informacije o izabranoj situaciji:
+Nijedna situacija nije izabrana!
+Za ovu mapu nema sačuvanih situacija.
+Obriši
+Obrisati vozača {}? Prethodno se čuva rezervna kopija.
+Vozač obrisan (rezervna kopija u %APPDATA%\\OMSI2-Launcher\\backups).
+Vozač sačuvan (rezervna kopija u %APPDATA%\\OMSI2-Launcher\\backups).
+Vodič I
+Vodič II
+Vodič III
+Vodič IV
+Izaberite vodič
+Pokreni vodič
+Otvaranje OMSI 2...
+OMSI 2 je već otvoren, čeka se njegov početni ekran...
+OMSI nije stigao do početnog ekrana (10 min).
+Početni ekran otkriven, biranje mape...
+Pritiskanje Pokreni!...
+Učitavanje mape u OMSI 2...
+Biranje datuma i vremena...
+Dijalog OMSI-ja za datum i vreme nije se otvorio.
+Dijalog OMSI-ja za datum i vreme ne izgleda kako se očekuje.
+Otvaranje menija vodiča...
+Meni vodiča OMSI-ja nije se otvorio.
+Učitavanje vodiča u OMSI 2...
+Omsi.exe nije moguće otvoriti: {}
+OMSI ne navodi mapu „{}”.
+Folder za rezervne kopije nije moguće napraviti: {}
+Rezervnu kopiju nije moguće napraviti: {}
+Vraćanje nije uspelo: {}
+options.cfg nije moguće sačuvati: {}
+Vozača nije moguće upisati: {}
+Prethodnu datoteku nije moguće ukloniti: {}
+Folder za podešavanja nije moguće napraviti: {}
+Podešavanja nije moguće sačuvati: {}
+Neispravno ime (ne sme biti prazno niti sadržati \\ / : * ? " < > | [ ]).
+Datum rođenja mora biti ggggmmdd (na primer 19950606).
+Vozač s tim imenom već postoji.
+Vozača nije moguće pročitati.
+Neispravna datoteka vozača.
+Opcije igre
+options.cfg nije moguće pročitati.
+OMSI podešavanje:
+Učitaj podešavanje
+Podešavanje „{}” učitano (nije sačuvano: pritisnite Sačuvaj u Opcijama ili Pokreni!).
+Podešavanje menja grafiku, zvuk i saobraćaj; ne menja mapu, vozača, jezik ni datum.
+OMSI 2 je otvoren: zatvorite ga da biste mogli da sačuvate izmene.
+Opcije sačuvane (rezervna kopija u %APPDATA%\\OMSI2-Launcher\\backups).
+Vrati poslednju kopiju
+options.cfg vraćen iz poslednje kopije.
+Ima nesačuvanih izmena (čuvaju se kada pritisnete Pokreni!).
+Traži:
+Nema rezultata
+Upišite za pretragu
+Opšte
+Napredno
+Grafika
+Grafika (napredno)
+Zvuk
+Saobraćaj VI
+Nijedno
+Lako
+Štedljivo
+Potpuno
+Beskonačno
+Veoma loše održavanje
+Loše održavanje
+Normalno održavanje
+Dobro održavanje
+Jezik
+Prodaja karata
+Poveži radio stanicu
+Stanje održavanja
+Vozačeva glava se pomera
+Glatki prelazi pogleda u vozačevom pogledu
+Alternativni pogled (zum = [Shift] + desno dugme, pomeranje = desno dugme)
+Automatsko centriranje volana (samo upravljanje tastaturom)
+Automatsko kvačilo
+Dinamička brzina volana
+Sudari s drugim vozilima i okolinom
+Ne prikazuj automatsku analizu reda vožnje
+Prikaži pomoć za prodaju karata i razgovor s putnicima
+Automatsko čuvanje
+Prikaži poruke o greškama
+Sudari: između korisnikovog vozila i terena
+Sudari: između korisnikovih vozila i pešaka
+Sudari: između vozila VI
+Performanse: višenitno izračunavanje
+Performanse: višenitno učitavanje tekstura
+Učitaj celu mapu pri pokretanju
+Ciljana brzina kadrova
+Broj susednih ploča
+Maksimalna udaljenost vidljivosti objekata
+Minimalna veličina objekta (% veličine ekrana)
+… za refleksije
+Refleksije u realnom vremenu
+Sistemi čestica: aktivni
+Maks. čestica po emiteru
+Čestice: samo vozilo korisnika
+Čestice: bez sistema čestica u refleksijama
+Efekat sjaja sunca
+Maksimalna složenost objekata (0–3)
+Maksimalna složenost mape (0–2)
+Efekti stencil bafera
+Senke
+Refleksije kiše
+Osobe vidljive u refleksijama kiše
+Ručni odnos ekrana
+Štedljivi režim refleksija: uključi ispod FPS
+Štedljivi režim refleksija: isključi iznad FPS
+Dinamičko smanjenje ploča: smanji ispod FPS
+Dinamičko smanjenje ploča: povećaj iznad FPS
+Koristi samo teksture niske rezolucije
+Ograniči sve teksture (osim onih samog autobusa) na 256 px
+Maks. memorija za teksture visoke rezolucije (MB)
+Veličina teksture refleksija u realnom vremenu
+Kanal materijala: Night Map
+Kanal materijala: Light Map
+Kanal materijala: Light Map of Terrain
+Kanal materijala: Reflexion Map
+Kanal materijala: Bump Map
+Glavna jačina zvuka
+Stereo efekat
+Maksimalan broj zvukova
+Zvuci vozila VI aktivni
+Zvuci okoline aktivni
+Doplerov efekat
+Efekti jeke
+Maks. broj vozila u drumskom saobraćaju
+Po redu vožnje (npr. autobusi)
+Faktor drumskog saobraćaja (%)
+Prioritet reda vožnje
+Parkirani automobili (%)
+Koristi smanjenu listu VI (manje različitih tipova)
+Maks. broj ljudi
+Faktor putnika na stanicama (%)

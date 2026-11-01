@@ -673,7 +673,7 @@ impl App {
                             omsi::open_folder(&dir);
                         }
                     });
-                    ui.label(RichText::new(tr("Los idiomas de la carpeta Languages de OMSI aparecen solos; para sus textos del launcher añade un archivo <CÓDIGO>.txt en la carpeta de idiomas.")).italics().size(12.0));
+                    ui.label(RichText::new(tr("Para añadir otro idioma, crea una plantilla de traducción y guárdala como <CÓDIGO>.txt en la carpeta de idiomas.")).italics().size(12.0));
                     ui.horizontal(|ui| {
                         ui.label(tr("Tema"));
                         for t in theme::Theme::ALL {
