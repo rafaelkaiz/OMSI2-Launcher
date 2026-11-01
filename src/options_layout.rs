@@ -443,6 +443,22 @@ fn traffic(cv: &Canvas, ui: &mut Ui, o: &mut Options) -> bool {
 mod tests {
     use super::*;
     use crate::i18n::Lang;
+    /// The text given to `cv.t(key, fallback)` is looked up in the launcher's translations, so it must be one of them (a stray colon or
+    /// full stop leaves Czech and Portuguese, which OMSI does not have, with OMSI's English).
+    #[test]
+    fn every_fallback_text_is_translated() {
+        for src in [include_str!("options_layout.rs"), include_str!("options_ui.rs")] {
+            for part in src.split(".t(\"").skip(1) {
+                let Some((_, rest)) = part.split_once("\", \"") else { continue };
+                let Some((fallback, _)) = rest.split_once("\")") else { continue };
+                if fallback.contains('"') || fallback.is_empty() {
+                    continue;
+                }
+                assert!(i18n::has(&fallback.replace("\\\\", "\\")), "no translation for \"{fallback}\"");
+            }
+        }
+    }
+
 
     /// Draws every tab in every launcher language on a real copy of the user's options, without a window: it must not panic and a
     /// plain draw must not report changes.

@@ -127,7 +127,7 @@ pub fn show(ctx: &egui::Context, st: &mut State, options: &mut Option<Options>, 
         if st.tab == 0 {
             // OMSI's "Cargar/Guardar" box: presets, loaded and saved here
             cv.group(ui, 17.0, 50.0, 557.0, 97.0, &cv.t("DG_Options_GroupBox10", "Cargar/Guardar"));
-            cv.label(ui, 29.0, 81.0, 230.0, &cv.t("DG_Options_Label73", "Opciones de carga"));
+            cv.label(ui, 29.0, 81.0, 230.0, &cv.t("DG_Options_Label73", "Opciones de carga:"));
             let names: Vec<String> = st.presets.iter().map(|p| p.file_stem().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()).collect();
             cv.put(ui, cv.rect(262.0, 74.0, 184.0, 22.0), |ui: &mut egui::Ui| {
                 crate::pick::pick(ui, "preset", 170.0, &names, &mut st.preset);
@@ -141,7 +141,7 @@ pub fn show(ctx: &egui::Context, st: &mut State, options: &mut Option<Options>, 
                     msg = Some(trf("Preset \"{}\" cargado (sin guardar: pulsa Guardar en Opciones o ¡Iniciar!).", &[&preset.name]));
                 }
             }
-            cv.label(ui, 29.0, 115.0, 230.0, &cv.t("DG_Options_Label74", "Guardar opciones actuales"));
+            cv.label(ui, 29.0, 115.0, 230.0, &cv.t("DG_Options_Label74", "Guardar opciones actuales:"));
             cv.put(ui, cv.rect(262.0, 107.0, 184.0, 22.0), egui::TextEdit::singleline(&mut st.new_preset).desired_width(184.0).hint_text(tr("Nombre del preset")));
             if cv.put(ui, cv.rect(455.0, 106.0, 94.0, 24.0), egui::Button::new(cv.t("DG_Options_Button8", "¡Guardar!")).min_size(egui::vec2(94.0, 24.0))).clicked() {
                 if let Some(dir) = omsi {
