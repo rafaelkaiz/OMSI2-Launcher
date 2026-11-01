@@ -127,6 +127,8 @@ struct App {
     locate_error: bool,
     born: Instant,
     entered_full: bool,
+    /// Whether the window is full screen right now; the setting is only what the next start does.
+    full_now: bool,
     load_started: Option<Instant>,
 }
 
@@ -249,6 +251,7 @@ impl App {
             locate_error: false,
             born: Instant::now(),
             entered_full: false,
+            full_now: false,
             load_started: None,
             status: Arc::new(Mutex::new(status.into())),
             // dev shortcut for screenshots: OMSI2_OPEN=loading shows the loading screen
@@ -682,7 +685,9 @@ impl App {
                     });
                     if ui.checkbox(&mut self.settings.fullscreen, tr("Abrir el launcher a pantalla completa (F11)")).changed() {
                         changed = true;
-                        set_fullscreen(ui.ctx(), self.settings.fullscreen);
+                    }
+                    if self.settings.fullscreen != self.full_now {
+                        ui.label(RichText::new(tr("Se aplicará al reiniciar el launcher (F11 lo cambia ahora).")).italics().size(12.0));
                     }
                     if ui.checkbox(&mut self.settings.always_on_top, tr("Mantener el launcher al frente mientras OMSI se abre")).changed() {
                         changed = true;
@@ -1133,12 +1138,13 @@ impl eframe::App for App {
         let can_go = can_start && (self.mode != LoadMode::SavedSituation || self.selected_situation().is_some());
 
         if ctx.input(|i| i.key_pressed(egui::Key::F11)) {
-            self.settings.fullscreen = !self.settings.fullscreen;
-            set_fullscreen(&ctx, self.settings.fullscreen);
+            self.full_now = !self.full_now;
+            self.settings.fullscreen = self.full_now;
+            set_fullscreen(&ctx, self.full_now);
             let _ = self.settings.save();
         }
         if self.restore_view.swap(false, Ordering::Relaxed) {
-            if self.settings.fullscreen {
+            if self.full_now {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
             }
             ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::Normal));
@@ -1156,7 +1162,7 @@ impl eframe::App for App {
         }
         // Full screen: the interface sits in the middle of a black screen, like OMSI's own start screen.
         let mut centred;
-        let host: &mut egui::Ui = if self.settings.fullscreen {
+        let host: &mut egui::Ui = if self.full_now {
             let screen = ui.max_rect();
             ui.painter().rect_filled(screen, 0.0, Color32::BLACK);
             let size = egui::vec2(1080.0_f32.min(screen.width()), 780.0_f32.min(screen.height()));
@@ -1169,6 +1175,7 @@ impl eframe::App for App {
             self.entered_full = true;
             if self.settings.fullscreen {
                 ctx.send_viewport_cmd(egui::ViewportCommand::Fullscreen(true));
+                self.full_now = true;
             }
         }
         // Opening splash: hides the window being created and the images loading, and makes the first black instant look intended.
