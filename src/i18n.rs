@@ -1061,6 +1061,7 @@ const ROWS: &[Row] = &[
     ("Usar lista de IA reducida (menos tipos diferentes)", ["Use reduced AI list (fewer different types)", "Reduzierte KI-Liste verwenden (weniger Typen)", "Użyj zredukowanej listy AI (mniej typów)", "Použít zkrácený seznam AI (méně typů)", "Utiliser la liste IA réduite (moins de types)", "Usar lista de IA reduzida (menos tipos)"]),
     ("Recuento máx. de personas", ["Max. people count", "Max. Anzahl Personen", "Maks. liczba osób", "Max. počet osob", "Nombre max. de personnes", "Contagem máx. de pessoas"]),
     ("Factor de pasajeros en estaciones (%)", ["Passenger factor at stops (%)", "Fahrgastfaktor an Haltestellen (%)", "Współczynnik pasażerów na przystankach (%)", "Faktor cestujících na zastávkách (%)", "Facteur de passagers aux arrêts (%)", "Fator de passageiros nas paragens (%)"]),
+    ("Azul", ["Blue", "Blau", "Niebieski", "Modrý", "Bleu", "Azul"]),
 ];
 
 #[cfg(test)]

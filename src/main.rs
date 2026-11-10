@@ -136,7 +136,7 @@ pub fn big_button(ui: &mut egui::Ui, text: &str, width: f32) -> egui::Response {
     ui.add(
         egui::Button::new(RichText::new(text).size(22.0).color(pal().light))
             .fill(pal().dark)
-            .corner_radius(0.0)
+            .corner_radius(pal().round)
             .min_size(egui::vec2(width, 40.0)),
     )
 }
@@ -589,7 +589,7 @@ impl App {
             });
             ui.add_space(6.0);
             let label = if self.tut_sel == 0 { tr("Elige un tutorial").to_string() } else { format!("{} {}", tr("Iniciar tutorial"), self.tut_sel) };
-            if ui.add_enabled(can_start && self.tut_sel > 0, egui::Button::new(RichText::new(label).size(20.0).color(Color32::WHITE)).fill(pal().dark).corner_radius(0.0).min_size(egui::vec2(240.0, 40.0))).clicked() {
+            if ui.add_enabled(can_start && self.tut_sel > 0, egui::Button::new(RichText::new(label).size(20.0).color(Color32::WHITE)).fill(pal().dark).corner_radius(pal().round).min_size(egui::vec2(240.0, 40.0))).clicked() {
                 start = Some(self.tut_sel as u8);
             }
         });
@@ -1223,7 +1223,7 @@ impl eframe::App for App {
                 let w = (ui.available_width() - 3.0 * ui.spacing().item_spacing.x) / 4.0;
                 let go = egui::Button::new(RichText::new(tr("¡Iniciar!")).size(22.0).color(Color32::WHITE))
                     .fill(pal().dark)
-                    .corner_radius(0.0)
+                    .corner_radius(pal().round)
                     .min_size(egui::vec2(w, 40.0));
                 let go_resp = ui.add_enabled(can_go, go);
                 paint_icon(ui, &go_resp, icons::Icon::Play, Color32::WHITE);
@@ -1283,7 +1283,15 @@ impl eframe::App for App {
                     ui.horizontal(|ui| {
                         ui.label(tr("Mapa actual:"));
                         let names: Vec<String> = self.maps.iter().map(|m| m.name.clone()).collect();
-                        pick::pick(ui, "map", ui.available_width() - 8.0, &names, &mut self.map);
+                        // "Last state" can only load maps that have a laststn.osn: the others are not listed in that mode
+                        let only_last = self.mode == LoadMode::LastState;
+                        if only_last && !self.maps.get(self.map).is_some_and(|m| m.has_last_state) {
+                            if let Some(i) = self.maps.iter().position(|m| m.has_last_state) {
+                                self.map = i;
+                            }
+                        }
+                        let maps = &self.maps;
+                        pick::pick_filtered(ui, "map", ui.available_width() - 8.0, &names, &mut self.map, &|i| !only_last || maps[i].has_last_state);
                     });
                     ui.add_space(6.0);
                     ui.radio_value(&mut self.mode, LoadMode::LastState, tr("Cargar último estado del mapa"));

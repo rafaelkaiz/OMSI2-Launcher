@@ -307,3 +307,4 @@ Parkoló autók (%)
 Csökkentett MI-lista használata (kevesebb különböző típus)
 Max. emberszám
 Utasok aránya a megállókban (%)
+Kék

@@ -6,6 +6,11 @@ use eframe::egui::{self, Event, Key, RichText, Ui};
 
 /// Returns true when the selection changed.
 pub fn pick(ui: &mut Ui, id: &str, width: f32, items: &[String], selected: &mut usize) -> bool {
+    pick_filtered(ui, id, width, items, selected, &|_| true)
+}
+
+/// Like `pick`, but only the entries for which `visible(index)` is true are listed (the indexes stay those of `items`).
+pub fn pick_filtered(ui: &mut Ui, id: &str, width: f32, items: &[String], selected: &mut usize, visible: &dyn Fn(usize) -> bool) -> bool {
     let fid = ui.scope_id().with(("pick-filter", id));
     let current = items.get(*selected).cloned().unwrap_or_default();
     let mut changed = false;
@@ -25,9 +30,9 @@ pub fn pick(ui: &mut Ui, id: &str, width: f32, items: &[String], selected: &mut 
         ui.data_mut(|d| d.insert_temp(fid, typed.clone()));
 
         let low = typed.to_lowercase();
-        let mut shown: Vec<usize> = (0..items.len()).filter(|&i| items[i].to_lowercase().starts_with(&low)).collect();
+        let mut shown: Vec<usize> = (0..items.len()).filter(|&i| visible(i) && items[i].to_lowercase().starts_with(&low)).collect();
         if shown.is_empty() {
-            shown = (0..items.len()).filter(|&i| items[i].to_lowercase().contains(&low)).collect();
+            shown = (0..items.len()).filter(|&i| visible(i) && items[i].to_lowercase().contains(&low)).collect();
         }
         if typed.is_empty() {
             ui.label(RichText::new(tr("Escribe para buscar")).italics().weak());

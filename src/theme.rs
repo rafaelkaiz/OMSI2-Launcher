@@ -9,16 +9,22 @@ pub enum Theme {
     Original,
     Dark,
     Light,
+    /// White and near-black with a blue accent, rounded and flat.
+    Azul,
+    /// OMSI 2's orange like Original, with rounded corners and softer lines.
+    ModernOmsi,
 }
 
 impl Theme {
-    pub const ALL: [Theme; 3] = [Theme::Original, Theme::Dark, Theme::Light];
+    pub const ALL: [Theme; 5] = [Theme::Original, Theme::ModernOmsi, Theme::Dark, Theme::Light, Theme::Azul];
 
     pub fn label(self) -> &'static str {
         match self {
             Theme::Original => tr("Original (naranja de OMSI 2)"),
             Theme::Dark => tr("Oscuro"),
             Theme::Light => tr("Claro"),
+            Theme::Azul => tr("Azul"),
+            Theme::ModernOmsi => "Modern OMSI",
         }
     }
 
@@ -27,7 +33,14 @@ impl Theme {
             Theme::Original => "original",
             Theme::Dark => "dark",
             Theme::Light => "light",
+            Theme::Azul => "azul",
+            Theme::ModernOmsi => "modern_omsi",
         }
+    }
+
+    /// The themes that use OMSI 2's orange and brown.
+    fn is_orange(self) -> bool {
+        matches!(self, Theme::Original | Theme::ModernOmsi)
     }
 
     pub fn from_key(s: &str) -> Theme {
@@ -46,6 +59,29 @@ impl Theme {
                 border: c(150, 40, 0),
                 dark: c(150, 40, 0),
                 light: c(255, 150, 30),
+                round: 0,
+            },
+            Theme::ModernOmsi => Palette {
+                bg: c(255, 178, 26),
+                field: c(255, 240, 205),
+                hover: c(255, 246, 224),
+                line: c(240, 140, 20),
+                text: c(120, 36, 0),
+                border: c(214, 120, 20),
+                dark: c(140, 44, 0),
+                light: c(255, 255, 255),
+                round: 12,
+            },
+            Theme::Azul => Palette {
+                bg: c(246, 248, 251),
+                field: c(255, 255, 255),
+                hover: c(232, 240, 254),
+                line: c(222, 227, 235),
+                text: c(15, 18, 26),
+                border: c(205, 211, 222),
+                dark: c(37, 99, 235),
+                light: c(255, 255, 255),
+                round: 10,
             },
             Theme::Dark => Palette {
                 bg: c(30, 30, 35),
@@ -56,6 +92,7 @@ impl Theme {
                 border: c(96, 96, 108),
                 dark: c(205, 105, 10),
                 light: c(255, 255, 255),
+                round: 0,
             },
             Theme::Light => Palette {
                 bg: c(244, 245, 247),
@@ -66,6 +103,7 @@ impl Theme {
                 border: c(176, 182, 192),
                 dark: c(205, 105, 10),
                 light: c(255, 255, 255),
+                round: 0,
             },
         }
     }
@@ -84,6 +122,8 @@ pub struct Palette {
     pub dark: Color32,
     /// Text on the big buttons.
     pub light: Color32,
+    /// Corner radius of the big buttons.
+    pub round: u8,
 }
 
 static CURRENT: RwLock<Option<Palette>> = RwLock::new(None);
@@ -101,17 +141,18 @@ pub fn apply(ctx: &egui::Context, theme: Theme) {
     v.panel_fill = p.bg;
     v.window_fill = p.bg;
     v.extreme_bg_color = p.field;
-    v.hyperlink_color = if theme == Theme::Original { p.text } else { p.dark };
+    v.hyperlink_color = if theme.is_orange() { p.text } else { p.dark };
     // No global text colour override: selected items switch to white (selection.stroke) on the accent fill.
     v.widgets.noninteractive.fg_stroke = egui::Stroke::new(1.0, p.text);
     v.widgets.noninteractive.bg_stroke = egui::Stroke::new(1.0, p.line);
     v.selection.bg_fill = p.dark;
     v.selection.stroke = egui::Stroke::new(1.0, Color32::WHITE);
-    v.window_stroke = egui::Stroke::new(2.0, p.border);
+    let modern = matches!(theme, Theme::Azul | Theme::ModernOmsi);
+    v.window_stroke = egui::Stroke::new(if modern { 1.0 } else { 2.0 }, p.border);
     let stroke = egui::Stroke::new(1.0, p.border);
     for w in [&mut v.widgets.inactive, &mut v.widgets.hovered, &mut v.widgets.active, &mut v.widgets.open] {
         w.bg_stroke = stroke;
-        w.corner_radius = if theme == Theme::Original { 0.into() } else { 4.into() };
+        w.corner_radius = if modern { 8.into() } else if theme == Theme::Original { 0.into() } else { 4.into() };
         w.fg_stroke = egui::Stroke::new(1.0, p.text);
     }
     v.widgets.inactive.weak_bg_fill = p.field;
@@ -119,7 +160,16 @@ pub fn apply(ctx: &egui::Context, theme: Theme) {
     v.widgets.hovered.weak_bg_fill = p.hover;
     v.widgets.hovered.bg_fill = p.hover;
     v.widgets.active.weak_bg_fill = p.hover;
-    if theme == Theme::Original {
+    if modern {
+        v.window_corner_radius = 12.into();
+        v.menu_corner_radius = 8.into();
+    }
+    if theme == Theme::Azul {
+        // Blue accent on white; text on the selected items stays white.
+        v.faint_bg_color = Color32::from_rgb(238, 242, 248);
+        v.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, p.dark);
+    }
+    if theme.is_orange() {
         // The main window keeps OMSI 2's orange; the windows over it are a pale cream, and a
         // chosen item is amber with the brown text still readable on it.
         v.window_fill = Color32::from_rgb(255, 248, 236);

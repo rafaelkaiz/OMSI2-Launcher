@@ -2432,7 +2432,7 @@ dependencies = [
 
 [[package]]
 name = "omsi2-launcher"
-version = "0.9.3"
+version = "1.0.0"
 dependencies = [
  "eframe",
  "egui_extras",

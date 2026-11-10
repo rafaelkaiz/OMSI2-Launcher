@@ -17,6 +17,8 @@ pub struct MapInfo {
     pub friendly: String,
     pub description: String,
     pub picture: Option<PathBuf>,
+    /// The map has a `laststn.osn` (a saved last state): only those maps can be loaded with "last state".
+    pub has_last_state: bool,
 }
 
 /// What the start screen does with the map: the first two radio buttons of OMSI's own screen.
@@ -89,7 +91,8 @@ pub fn list_maps(omsi: &Path) -> Vec<MapInfo> {
             let description = cfg_block(&cfg, "[description]");
             let picture = Some(dir.join("picture.jpg")).filter(|p| p.is_file());
             let folder = dir.file_name()?.to_string_lossy().into_owned();
-            Some(MapInfo { folder, name, friendly, description, picture })
+            let has_last_state = dir.join("laststn.osn").is_file();
+            Some(MapInfo { folder, name, friendly, description, picture, has_last_state })
         })
         .collect();
     maps.sort_by_key(|m| m.name.to_lowercase());
@@ -232,6 +235,17 @@ pub fn launch(
     status(tr("Pantalla de inicio detectada, eligiendo mapa..."));
     std::thread::sleep(Duration::from_millis(500));
 
+    // The buttons and radio buttons are not windows, they are drawn by the form. With the optional plugin installed they are pressed
+    // from inside OMSI; otherwise (or as soon as the plugin does not answer) they are clicked where they are drawn, at positions
+    // measured on OMSI's 1000x768 start screen and scaled to the real client size.
+    let mut plugin = crate::plugin::installed(omsi);
+    // The map list depends on the load mode: with "last state" OMSI hides the maps that have no last state. When the user wants
+    // "load map without buses" it is chosen FIRST (it lists every map), then the map. The other modes keep the usual order.
+    if mode == LoadMode::NoBuses {
+        press_control(form, &mut plugin, "radio1", true, 587, 112, &status);
+        std::thread::sleep(Duration::from_millis(500));
+    }
+
     // The two combo boxes on the start form: the one that has the map name is the map one, the other is the driver one.
     let combos: Vec<HWND> = children(form).into_iter().filter(|&c| class_name(c) == "TComboBox").collect();
     let map_combo = combos
@@ -257,15 +271,11 @@ pub fn launch(
         }
     }
     std::thread::sleep(Duration::from_millis(800));
-    // The buttons and radio buttons are not windows, they are drawn by the form. With the optional plugin installed they are pressed
-    // from inside OMSI; otherwise (or as soon as the plugin does not answer) they are clicked where they are drawn, at positions
-    // measured on OMSI's 1000x768 start screen and scaled to the real client size.
-    let mut plugin = crate::plugin::installed(omsi);
     // The date and time go LAST: choosing a load mode (or a situation in the list) makes OMSI recompute the time shown from that
     // situation, which would throw away a time chosen before.
     match mode {
         LoadMode::LastState => press_control(form, &mut plugin, "radio0", true, 587, 74, &status),
-        LoadMode::NoBuses => press_control(form, &mut plugin, "radio1", true, 587, 112, &status),
+        LoadMode::NoBuses => {} // already chosen before the map
         LoadMode::SavedSituation => press_control(form, &mut plugin, "radio2", true, 587, 149, &status),
         LoadMode::Tutorial(_) => {}
     }
@@ -647,7 +657,7 @@ mod spawn_name_tests {
             "[name]\nT\n\n[entrypoints]\n2\n1\n10\n0\n1.0\n2.0\n3.0\n0\n0\n0\n1\n5\n[25 DIM] Conleau\n7\n11\n0\n1.0\n2.0\n3.0\n0\n0\n0\n1\n5\nAuray [200][201]\n\n[map]\n1\n",
         )
         .unwrap();
-        let map = MapInfo { folder: "T".into(), name: "T".into(), friendly: "T".into(), description: String::new(), picture: None };
+        let map = MapInfo { folder: "T".into(), name: "T".into(), friendly: "T".into(), description: String::new(), picture: None, has_last_state: false };
         assert_eq!(entry_points(&dir, &map), ["[25 DIM] Conleau", "Auray [200][201]"]);
         let _ = std::fs::remove_dir_all(&dir);
     }

@@ -307,3 +307,4 @@ Parkirani automobili (%)
 Koristi smanjenu listu VI (manje različitih tipova)
 Maks. broj ljudi
 Faktor putnika na stanicama (%)
+Plava
